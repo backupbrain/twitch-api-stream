@@ -11,14 +11,33 @@ app.get("/", (request: Request, response: Response) => {
   // res.json({ status: "success", message: "Hello world" });
 });
 
+app.post(
+  "/api/1.0/test",
+  (request: Request, response: Response, next: NextFunction) => {
+    console.log({ data: request.body });
+    response.json(request.body);
+  }
+);
+
+app.get(
+  "/api/1.0/test",
+  (request: Request, response: Response, next: NextFunction) => {
+    response.json({ status: "success" });
+  }
+);
+
 // login
+type LoginParams = {
+  username: string;
+  password: string;
+};
 app.post(
   "/api/1.0/account/login",
   async (request: Request, response: Response, next: NextFunction) => {
     /*
   { "username": "email@example.com", "password": "abc123" }
   */
-    const data = request.body;
+    const data: LoginParams = request.body;
     const username = data.username;
     const password = data.password;
     const user = await prisma.user.findFirst({

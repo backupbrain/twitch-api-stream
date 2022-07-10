@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-}
+};
+// import withTypescript from "@zeit/next-typescript";
 
-module.exports = nextConfig
+// export default withTypescript();
