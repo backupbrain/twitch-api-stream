@@ -11,21 +11,6 @@ app.get("/", (request: Request, response: Response) => {
   // res.json({ status: "success", message: "Hello world" });
 });
 
-app.post(
-  "/api/1.0/test",
-  (request: Request, response: Response, next: NextFunction) => {
-    console.log({ data: request.body });
-    response.json(request.body);
-  }
-);
-
-app.get(
-  "/api/1.0/test",
-  (request: Request, response: Response, next: NextFunction) => {
-    response.json({ status: "success" });
-  }
-);
-
 // login
 type LoginParams = {
   username: string;
