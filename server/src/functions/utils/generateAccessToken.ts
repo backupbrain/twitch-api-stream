@@ -22,9 +22,6 @@ export const generateAccessToken = ({ length = 12 }: Props): AuthToken => {
     );
   }
 
-  const now = new Date().getTime();
-  const expriesAtTimestamp = now + expirationDurationSeconds;
-
   return {
     accessToken,
     refreshToken: accessToken,

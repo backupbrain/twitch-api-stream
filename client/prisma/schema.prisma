@@ -14,7 +14,7 @@ model User {
   id                          String        @id @default(uuid())
   username                    String        @unique
   password                    String
-  isConfrimed                 Boolean
+  isConfirmed                 Boolean       @default(false)
   verificationToken           String?
   resetPasswordToken          String?
   passwordResetTokenExpiresAt DateTime?

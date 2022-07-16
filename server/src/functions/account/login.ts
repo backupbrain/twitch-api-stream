@@ -15,8 +15,8 @@ export const login = async ({
   username,
   password,
 }: Props): Promise<AuthToken> => {
-  const user = await prisma.user.findUnique({
-    where: { username },
+  const user = await prisma.user.findFirst({
+    where: { username, isConfirmed: true },
   });
   if (!user) {
     throw new HttpUnauthorizedError("Unauthorized");
@@ -29,7 +29,9 @@ export const login = async ({
     throw new HttpUnauthorizedError("Unauthorized");
   }
   const authToken = generateAccessToken({});
-  const expiresAt = new Date(authToken.expiresIn);
+  const now = new Date().getTime();
+  const expriesAtTimestamp = now + expirationDurationSeconds;
+  const expiresAt = new Date(expriesAtTimestamp);
   await prisma.accessToken.create({
     data: {
       user: { connect: { id: user.id } },

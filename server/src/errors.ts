@@ -30,14 +30,12 @@ export class HttpForbiddenError extends HttpError {
 
 export class HttpInvalidInputError extends HttpError {
   constructor(details: any) {
-    console.log({ details });
     let message = "Invalid input";
     if (typeof details === "string") {
       message = details;
     }
     super(message, 400);
     if (typeof details === "object") {
-      console.log("setting details");
       this.details = details;
     }
     // Set the prototype explicitly.
@@ -51,7 +49,6 @@ export class HttpInvalidInputError extends HttpError {
    */
   getRestDetails() {
     const output: { property: string; errors: string[] }[] = [];
-    console.log({ details: this.details });
     if (this.details) {
       this.details.forEach((validationError: ValidationError) => {
         const errorDescriptions: string[] = [];
@@ -59,7 +56,6 @@ export class HttpInvalidInputError extends HttpError {
           const errorDescription = validationError.constraints[key];
           errorDescriptions.push(errorDescription);
         }
-        console.log(validationError);
         output.push({
           property: validationError.property,
           errors: errorDescriptions,

@@ -15,7 +15,7 @@ model User {
   id                 String        @id @default(uuid())
   username           String        @unique
   hashedPassword     String
-  isConfrimed        Boolean
+  isConfirmed        Boolean       @default(false)
   verificationToken  String?
   resetPasswordToken String?
   createdAt          DateTime      @default(now())
