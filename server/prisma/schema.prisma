@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["interactiveTransactions"]
 }
 
 datasource db {
@@ -13,17 +14,29 @@ datasource db {
 model User {
   id                 String        @id @default(uuid())
   username           String        @unique
-  password           String
+  hashedPassword     String
   isConfrimed        Boolean
   verificationToken  String?
   resetPasswordToken String?
   createdAt          DateTime      @default(now())
   AccessToken        AccessToken[]
+  ApiKey             ApiKey[]
 }
 
 model AccessToken {
-  id     String @id @default(uuid())
-  token  String @unique
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model ApiKey {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  key       String    @unique
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  lastUsed  DateTime?
 }

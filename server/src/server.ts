@@ -1,43 +1,17 @@
-import express, { NextFunction, Request, Response } from "express";
+require("dotenv").config();
+import express, { NextFunction, Response } from "express";
+import { Request } from "./types";
+import { HttpError, HttpInvalidInputError } from "./errors";
 import cors from "cors";
-import { prisma } from "./database/prisma";
+import { router } from "./routes";
+const requestedPort = process.env.PORT || "3030";
+const port = parseInt(requestedPort);
+
 const app = express();
 app.use(cors());
 app.use(express.json());
-const port = 3030;
 
-app.get("/", (request: Request, response: Response) => {
-  throw new Error("Invalid Data");
-  // res.json({ status: "success", message: "Hello world" });
-});
-
-// login
-type LoginParams = {
-  username: string;
-  password: string;
-};
-app.post(
-  "/api/1.0/account/login",
-  async (request: Request, response: Response, next: NextFunction) => {
-    /*
-  { "username": "email@example.com", "password": "abc123" }
-  */
-    const data: LoginParams = request.body;
-    const username = data.username;
-    const password = data.password;
-    const user = await prisma.user.findFirst({
-      where: {
-        username,
-        password,
-      },
-    });
-    if (!user) {
-      next(new Error("Unauthorized"));
-      return;
-    }
-    response.json({ status: "success", message: "User logged in" });
-  }
-);
+app.use("/", router);
 
 // Handle undefined routes
 app.use((request: Request, response: Response, next: NextFunction) => {
@@ -47,14 +21,33 @@ app.use((request: Request, response: Response, next: NextFunction) => {
   });
 });
 
-// handle errors
+// error handling
 app.use(
-  (error: Error, request: Request, response: Response, next: NextFunction) => {
-    console.error(error.stack);
-    response.status(500).json({
-      status: "error",
-      message: "Internal server error",
-    });
+  (
+    error: HttpError | HttpInvalidInputError,
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    console.log(typeof error);
+    if (error.status === 400) {
+      // TODO: build error details
+      const inputError = error as HttpInvalidInputError;
+      res.status(inputError.status || 500).send({
+        error: {
+          status: inputError.status || 500,
+          message: inputError.message || "Invalid input",
+          details: inputError.getRestDetails(),
+        },
+      });
+    } else {
+      res.status(error.status || 500).send({
+        error: {
+          status: error.status || 500,
+          message: error.message || "Internal Server Error",
+        },
+      });
+    }
   }
 );
 
