@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import styles from "../../../styles/Home.module.css";
 import Link from "next/link";
 import NavbarPublic from "../../../components/navbar/NavbarPublic";
-import InputText from "../../../components/InputText";
+import InputText from "../../../components/input/InputText";
 
 export default function Reset() {
   const username = useRef("");

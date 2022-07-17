@@ -2,9 +2,15 @@ import styles from "../../styles/Home.module.css";
 import Link from "next/link";
 import NavbarPublic from "../../components/navbar/NavbarPublic";
 import FormLogin from "../../components/form/FormLogin";
+import { useRouter } from "next/router";
 
 export default function Login() {
-  const navigateToAuthorizedPage = () => {};
+  const router = useRouter();
+  const navigateToAuthorizedPage = () => {
+    router.push({
+      pathname: "/account",
+    });
+  };
 
   return (
     <div className={styles.container}>
