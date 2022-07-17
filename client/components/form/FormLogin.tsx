@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { MouseEvent, useRef, useState } from "react";
-import InputText from "../InputText";
+import InputText from "../input/InputText";
+import {
+  AuthState,
+  AuthToken,
+  useStore as useAuthStore,
+} from "../../store/authorization/authorization";
+import InputPassword from "../input/InputPassword";
 
 export type Props = {
   username?: string;
@@ -14,6 +20,7 @@ export default function FormLogin(props: Props) {
   const username = useRef(props.username || "");
   const password = useRef(props.password || "");
   const [isFormValid, setIsFormValid] = useState(false);
+  const setAuthToken = useAuthStore((state: AuthState) => state.setAuthToken);
 
   const onUsernameChange = async (text: string) => {
     username.current = text;
@@ -60,10 +67,18 @@ export default function FormLogin(props: Props) {
           body: JSON.stringify(data),
         }
       );
-      const responseJson = await response.json();
-      console.log({ responseJson });
-      if (props.onLoginSuccess) {
-        props.onLoginSuccess();
+      if (response.status == 200) {
+        const authToken: AuthToken = await response.json();
+        setAuthToken(authToken);
+        console.log({ authToken });
+        if (props.onLoginSuccess) {
+          props.onLoginSuccess();
+        }
+      } else {
+        const errorInfo = await response.json();
+        if (props.onLoginFail) {
+          props.onLoginFail(errorInfo.message);
+        }
       }
     } catch (error) {
       // TODO: process this error
@@ -85,10 +100,9 @@ export default function FormLogin(props: Props) {
           onChangeText={onUsernameChange}
         />
 
-        <InputText
+        <InputPassword
           label="Password"
           name="password"
-          type="password"
           value=""
           placeholder=""
           onChangeText={onPasswordChange}

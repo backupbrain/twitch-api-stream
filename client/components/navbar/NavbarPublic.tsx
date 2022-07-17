@@ -21,6 +21,13 @@ export default function NavbarPublic(props: Props) {
               </Link>
             </li>
           )}
+          {!props.user && (
+            <li>
+              <Link href="/account/create">
+                <a>Create account</a>
+              </Link>
+            </li>
+          )}
         </ul>
       </div>
     </div>

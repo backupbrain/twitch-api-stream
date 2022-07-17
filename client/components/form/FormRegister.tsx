@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { MouseEvent, useRef, useState } from "react";
 import InputCheckbox from "../input/InputCheckbox";
-import InputText from "../InputText";
+import InputPassword from "../input/InputPassword";
+import InputText from "../input/InputText";
 
 export type Props = {
   username?: string;
@@ -64,6 +65,30 @@ export default function FormRegister(props: Props) {
       username: username.current,
       password: password.current,
     };
+    try {
+      const response = await fetch(
+        "http://localhost:3030/api/1.0/account/create",
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
+      const responseJson = await response.json();
+      console.log({ responseJson });
+      if (props.onRegisterSuccess) {
+        props.onRegisterSuccess();
+      }
+    } catch (error) {
+      // TODO: process this error
+      console.error(error);
+      if (props.onRegisterFail) {
+        props.onRegisterFail(error);
+      }
+    }
   };
   return (
     <div>
@@ -78,10 +103,9 @@ export default function FormRegister(props: Props) {
             onChangeText={onUsernameChange}
           />
 
-          <InputText
+          <InputPassword
             label="Password"
             name="password"
-            type="password"
             value=""
             placeholder=""
             onChangeText={onPasswordChange}
