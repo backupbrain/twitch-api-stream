@@ -4,10 +4,10 @@ import NavbarPublic from "../../components/navbar/NavbarPublic";
 import FormRegister from "../../components/form/FormRegister";
 import { useRouter } from "next/router";
 import React, { useRef } from "react";
-const router = useRouter();
 
 export default function Register() {
   const username = useRef("");
+  const router = useRouter();
 
   const onUsernameChange = (text: string) => {
     username.current = text;
@@ -24,7 +24,7 @@ export default function Register() {
     <div className={styles.container}>
       <NavbarPublic />
 
-      <h1 className="text-3xl font-bold underline">Create Account</h1>
+      <h1>Create Account</h1>
       <p className={styles.description}>
         <Link href="/">
           <a>Back to home</a>

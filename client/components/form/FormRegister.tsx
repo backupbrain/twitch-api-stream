@@ -23,7 +23,6 @@ export default function FormRegister(props: Props) {
   const onUsernameChange = async (text: string) => {
     username.current = text;
     await validateForm(text, password.current, didAgree.current);
-    console.log({ username: username.current });
     if (props.onUsernameChange) {
       props.onUsernameChange(text);
     }
@@ -77,10 +76,19 @@ export default function FormRegister(props: Props) {
           body: JSON.stringify(data),
         }
       );
-      const responseJson = await response.json();
-      console.log({ responseJson });
-      if (props.onRegisterSuccess) {
-        props.onRegisterSuccess();
+
+      if (response.status == 200) {
+        const responseJson = await response.json();
+        console.log({ responseJson });
+        if (props.onRegisterSuccess) {
+          props.onRegisterSuccess();
+        }
+      } else {
+        if (props.onRegisterFail) {
+          const errorInfo = await response.json();
+          console.log({ errorInfo });
+          props.onRegisterFail(errorInfo.message);
+        }
       }
     } catch (error) {
       // TODO: process this error

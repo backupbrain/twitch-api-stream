@@ -26,7 +26,7 @@ export default function Verify() {
     <div className={styles.container}>
       <NavbarPublic />
 
-      <h1 className="text-3xl font-bold underline">Verify Your Account</h1>
+      <h1>Verify Your Account</h1>
       <p className={styles.description}>
         <Link href="/">
           <a>Back to home</a>

@@ -7,7 +7,7 @@ import { refreshAuthToken } from "../functions/account/refreshAuthToken";
 import { IsEmail, validateOrReject } from "class-validator";
 import { HttpInvalidInputError, HttpUnauthorizedError } from "../errors";
 import { logout } from "../functions/account/logout";
-import { register } from "../functions/account/register";
+import { create } from "../functions/account/create";
 import { verifyUser } from "../functions/account/verifyUser";
 
 /**
@@ -21,6 +21,7 @@ class RegistrationRequest {
 router.post(
   "/create",
   async (request: Request, response: Response, next: NextFunction) => {
+    console.log({ body: request.body });
     const registrationRequest = new RegistrationRequest();
     registrationRequest.username = request.body.username;
     registrationRequest.password = request.body.password;
@@ -28,16 +29,15 @@ router.post(
       await validateOrReject(registrationRequest);
     } catch (errors) {
       console.log({ errors });
-      console.log(errors);
       return next(new HttpInvalidInputError(errors));
     }
     const username = registrationRequest.username;
     const password = registrationRequest.password;
     try {
-      const user = await register({ username, password });
+      const user = await create({ username, password });
       // TODO send email
       console.log(
-        `User created with verification code: ${user.verificationToken}`
+        `User ${username} created with verification code: ${user.verificationToken}`
       );
       return response.json({ status: "success" });
     } catch (error: unknown) {

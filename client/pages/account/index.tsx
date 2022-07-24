@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   AuthState,
   useStore as useAuthStore,
+  routeToLoginWhenAuthTokenExpired,
 } from "../../store/authorization/authorization";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
@@ -12,19 +13,10 @@ export default function Index() {
   const expirationTime = useAuthStore(
     (state: AuthState) => state.expirationTime
   );
+  const authToken = useAuthStore((state: AuthState) => state.authToken);
 
-  const routeToLoginWhenAuthTokenExpired = () => {
-    const now = new Date();
-    if (now >= expirationTime) {
-      console.log("expiration passed");
-      console.log({ expirationTime, now });
-      router.push({
-        pathname: "/account/login",
-      });
-    }
-  };
   useEffect(() => {
-    routeToLoginWhenAuthTokenExpired();
+    routeToLoginWhenAuthTokenExpired({ authToken, expirationTime, router });
   }, [expirationTime]);
   return (
     <div className={styles.container}>
