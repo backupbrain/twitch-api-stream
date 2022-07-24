@@ -1,4 +1,4 @@
-import { MouseEvent, useEffect, useRef, useState } from "react";
+import { MouseEvent, useRef, useState } from "react";
 import InputText from "../input/InputText";
 
 export type Props = {
@@ -14,10 +14,6 @@ export default function FormVerifyRegistration(props: Props) {
 
   const verificationCode = useRef(props.verificationCode || "");
   const [isFormValid, setIsFormValid] = useState(false);
-
-  useEffect(() => {
-    username.current = props.username || "";
-  }, [props.username]);
 
   const onUsernameChange = async (text: string) => {
     username.current = text;
@@ -63,10 +59,19 @@ export default function FormVerifyRegistration(props: Props) {
           body: JSON.stringify(data),
         }
       );
-      const responseJson = await response.json();
-      console.log({ responseJson });
-      if (props.onVerificationSuccess) {
-        props.onVerificationSuccess();
+
+      if (response.status == 200) {
+        const responseJson = await response.json();
+        console.log({ responseJson });
+        if (props.onVerificationSuccess) {
+          props.onVerificationSuccess();
+        }
+      } else {
+        if (props.onVerificationFail) {
+          const errorInfo = await response.json();
+          console.log({ errorInfo });
+          props.onVerificationFail(errorInfo.message);
+        }
       }
     } catch (error) {
       // TODO: process this error
@@ -83,7 +88,7 @@ export default function FormVerifyRegistration(props: Props) {
           label="Email"
           name="email"
           type="email"
-          value={username.current}
+          value={props.username || ""}
           placeholder="email@example.com"
           onChangeText={onUsernameChange}
         />

@@ -1,3 +1,4 @@
+import { NextRouter } from "next/router";
 import create from "zustand";
 
 export const authTokenStorageKey = "authToken";
@@ -54,16 +55,49 @@ export const useStore = create<AuthState>((set, get) => ({
   loadAuthTokenFromStorage: () => {
     const authTokenString = localStorage.getItem(authTokenStorageKey);
     console.log({ authTokenString });
+    let newAuthToken: AuthToken = {
+      accessToken: "",
+      tokenType: "",
+      refreshToken: "",
+      expiresIn: 0,
+      scopes: [],
+    };
     if (authTokenString) {
-      const newAuthToken = JSON.parse(authTokenString);
+      newAuthToken = JSON.parse(authTokenString);
       console.log({ newAuthToken });
-      const now = new Date().getTime();
-      const expriesAtTimestamp = now + newAuthToken.expiresIn;
-      const expirationTime = new Date(expriesAtTimestamp);
-      const isAuthenticated = expirationTime.getTime() > now;
-      console.log({ isAuthenticated });
-      console.log({ expirationTime, now: new Date() });
-      set({ authToken: newAuthToken, expirationTime, isAuthenticated });
     }
+    const now = new Date().getTime();
+    const expriesAtTimestamp = now + newAuthToken.expiresIn;
+    const expirationTime = new Date(expriesAtTimestamp);
+    const isAuthenticated = expirationTime.getTime() > now;
+    console.log({ isAuthenticated });
+    console.log({ expirationTime, now: new Date() });
+    set({ authToken: newAuthToken, expirationTime, isAuthenticated });
   },
 }));
+
+export type AuthTokenRouterProps = {
+  authToken?: AuthToken;
+  expirationTime: Date;
+  router: NextRouter;
+};
+export const routeToLoginWhenAuthTokenExpired = ({
+  authToken,
+  expirationTime,
+  router,
+}: AuthTokenRouterProps) => {
+  if (!authToken) {
+    console.log("Waiting for auth token...");
+  } else {
+    const now = new Date();
+    if (now >= expirationTime) {
+      console.log("expiration passed");
+      console.log({ expirationTime, now });
+      router.push({
+        pathname: "/account/login",
+      });
+    } else {
+      console.log("Login token still valid");
+    }
+  }
+};

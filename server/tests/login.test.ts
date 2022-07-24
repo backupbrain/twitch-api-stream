@@ -2,7 +2,7 @@ import request from "supertest";
 import { app } from "../src/app";
 import { AccessToken, User } from "@prisma/client";
 import { prisma } from "../src/database/prisma";
-import { register } from "../src/functions/account/register";
+import { create } from "../src/functions/account/create";
 import clearDatabase from "./setup";
 import { verifyUser } from "../src/functions/account/verifyUser";
 import { AuthToken } from "../src/types";
@@ -16,7 +16,7 @@ const unconfirmedUsername = "unconfirmed@example.com";
 let unconfirmedUser: User;
 
 const setup = async () => {
-  user = await register({
+  user = await create({
     username,
     password,
   });
@@ -24,7 +24,7 @@ const setup = async () => {
     username,
     verificationToken: user.verificationToken || "",
   });
-  unconfirmedUser = await register({
+  unconfirmedUser = await create({
     username: unconfirmedUsername,
     password,
   });

@@ -9,10 +9,7 @@ export type Props = {
   password: string;
 };
 
-export const register = async ({
-  username,
-  password,
-}: Props): Promise<User> => {
+export const create = async ({ username, password }: Props): Promise<User> => {
   const hashedPassword = hashPassword({ password });
   const verificationToken = createOneTimePassword({});
   try {
