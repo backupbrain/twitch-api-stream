@@ -37,8 +37,6 @@ export const useStore = create<AuthState>((set, get) => ({
       isAuthenticated = true;
     }
     const expirationTime = newAuthToken.expiresAt;
-    console.log({ isAuthenticated });
-    console.log({ expirationTime: newAuthToken.expiresAt, now: new Date() });
     set({ authToken: newAuthToken, expirationTime, isAuthenticated });
     // get().checkIfAuthTokenValid();
     window.localStorage.setItem(
@@ -61,7 +59,6 @@ export const useStore = create<AuthState>((set, get) => ({
   },
   loadAuthTokenFromStorage: () => {
     const authTokenString = localStorage.getItem(authTokenStorageKey);
-    console.log({ authTokenString });
     let newAuthToken: AuthToken = {
       accessToken: "",
       tokenType: "",
@@ -75,7 +72,6 @@ export const useStore = create<AuthState>((set, get) => ({
       if (typeof newAuthToken.expiresAt === "string") {
         newAuthToken.expiresAt = new Date(newAuthToken.expiresAt);
       }
-      console.log({ newAuthToken });
     }
     const now = new Date().getTime();
     const expirationTime = newAuthToken.expiresAt || new Date();
@@ -83,8 +79,6 @@ export const useStore = create<AuthState>((set, get) => ({
     if (newAuthToken.expiresAt && newAuthToken.expiresAt.getTime() > now) {
       isAuthenticated = true;
     }
-    console.log({ isAuthenticated });
-    console.log({ expirationTime, now: new Date() });
     set({ authToken: newAuthToken, expirationTime, isAuthenticated });
   },
 }));
@@ -98,17 +92,12 @@ export const routeToLoginWhenAuthTokenExpired = ({
   router,
 }: AuthTokenRouterProps) => {
   if (!authToken) {
-    console.log("Waiting for auth token...");
   } else {
     const now = new Date();
     if (authToken.expiresAt && now >= authToken.expiresAt) {
-      console.log("expiration passed");
-      console.log({ expiresAt: authToken.expiresAt, now });
       router.push({
         pathname: "/account/login",
       });
-    } else {
-      console.log("Login token still valid");
     }
   }
 };
