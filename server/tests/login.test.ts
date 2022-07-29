@@ -1,11 +1,12 @@
 import request from "supertest";
 import { app } from "../src/app";
-import { AccessToken, User } from "@prisma/client";
+import { User } from "@prisma/client";
 import { prisma } from "../src/database/prisma";
 import { create } from "../src/functions/account/create";
 import clearDatabase from "./setup";
 import { verifyUser } from "../src/functions/account/verifyUser";
 import { AuthToken } from "../src/types";
+import { resetUsageStats } from "../src/functions/rateLimit/resetUsageStats";
 
 const username = "user@example.com";
 const password = "password";
@@ -120,6 +121,7 @@ Object {
 `);
   });
   test("Can extend auth token", async () => {
+    await resetUsageStats({ user });
     const endpoint = "/api/1.0/account/refresh";
     const response = await request(app)
       .post(endpoint)
@@ -139,6 +141,7 @@ Object {
   });
 
   test("Can log out", async () => {
+    await resetUsageStats({ user });
     const endpoint = "/api/1.0/account/logout";
     const response = await request(app)
       .post(endpoint)

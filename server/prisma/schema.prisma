@@ -19,8 +19,9 @@ model User {
   verificationToken  String?
   resetPasswordToken String?
   createdAt          DateTime      @default(now())
-  AccessToken        AccessToken[]
-  ApiKey             ApiKey[]
+  accessToken        AccessToken[]
+  apiKey             ApiKey[]
+  apiStats           ApiStats?
 }
 
 model AccessToken {
@@ -39,4 +40,17 @@ model ApiKey {
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
   lastUsed  DateTime?
+}
+
+model ApiStats {
+  user                                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                              String    @unique
+  accountBirthday                     DateTime  @default(now())
+  billingPeriodStart                  DateTime  @default(now())
+  billingPeriodEnd                    DateTime
+  numApiCallsSinceAccountBirthday     Int       @default(0)
+  numApiCallsSinceBillingStart        Int       @default(0)
+  numApiCallsRemainingInBillingPeriod Int
+  numApiCallsAllowedInPeriod          Int
+  lastApiCall                         DateTime?
 }
