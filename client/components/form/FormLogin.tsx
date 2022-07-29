@@ -25,7 +25,6 @@ export default function FormLogin(props: Props) {
   const onUsernameChange = async (text: string) => {
     username.current = text;
     await validateForm(text, password.current);
-    console.log({ username: username.current });
     if (props.onUsernameChange) {
       props.onUsernameChange(text);
     }
@@ -70,7 +69,6 @@ export default function FormLogin(props: Props) {
       if (response.status == 200) {
         const authToken: AuthToken = await response.json();
         setAuthToken(authToken);
-        console.log({ authToken });
         if (props.onLoginSuccess) {
           props.onLoginSuccess();
         }
@@ -118,7 +116,7 @@ export default function FormLogin(props: Props) {
         </button>
       </form>
       <div>
-        <Link href="/account/register">
+        <Link href="/account/create">
           <a>Create account</a>
         </Link>
       </div>

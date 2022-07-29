@@ -16,7 +16,7 @@ export default function Index() {
   const authToken = useAuthStore((state: AuthState) => state.authToken);
 
   useEffect(() => {
-    routeToLoginWhenAuthTokenExpired({ authToken, expirationTime, router });
+    routeToLoginWhenAuthTokenExpired({ authToken, router });
   }, [expirationTime]);
   return (
     <div className={styles.container}>

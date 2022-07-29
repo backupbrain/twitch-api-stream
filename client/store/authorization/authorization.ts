@@ -7,6 +7,7 @@ export type AuthToken = {
   tokenType: string;
   refreshToken: string;
   expiresIn: number;
+  expiresAt?: Date;
   scopes: string[];
 };
 
@@ -27,11 +28,15 @@ export const useStore = create<AuthState>((set, get) => ({
   setAuthToken: (newAuthToken: AuthToken) => {
     // TODO: store expiration in asyncstorage
     const now = new Date().getTime();
-    const expriesAtTimestamp = now + newAuthToken.expiresIn;
-    const expirationTime = new Date(expriesAtTimestamp);
-    const isAuthenticated = expirationTime.getTime() > now;
-    console.log({ isAuthenticated });
-    console.log({ expirationTime, now: new Date() });
+    if (!newAuthToken.expiresAt) {
+      const expriesAtTimestamp = now + newAuthToken.expiresIn;
+      newAuthToken.expiresAt = new Date(expriesAtTimestamp);
+    }
+    let isAuthenticated = false;
+    if (newAuthToken.expiresAt && newAuthToken.expiresAt.getTime() > now) {
+      isAuthenticated = true;
+    }
+    const expirationTime = newAuthToken.expiresAt;
     set({ authToken: newAuthToken, expirationTime, isAuthenticated });
     // get().checkIfAuthTokenValid();
     window.localStorage.setItem(
@@ -54,50 +59,45 @@ export const useStore = create<AuthState>((set, get) => ({
   },
   loadAuthTokenFromStorage: () => {
     const authTokenString = localStorage.getItem(authTokenStorageKey);
-    console.log({ authTokenString });
     let newAuthToken: AuthToken = {
       accessToken: "",
       tokenType: "",
       refreshToken: "",
       expiresIn: 0,
+      expiresAt: new Date(),
       scopes: [],
     };
     if (authTokenString) {
       newAuthToken = JSON.parse(authTokenString);
-      console.log({ newAuthToken });
+      if (typeof newAuthToken.expiresAt === "string") {
+        newAuthToken.expiresAt = new Date(newAuthToken.expiresAt);
+      }
     }
     const now = new Date().getTime();
-    const expriesAtTimestamp = now + newAuthToken.expiresIn;
-    const expirationTime = new Date(expriesAtTimestamp);
-    const isAuthenticated = expirationTime.getTime() > now;
-    console.log({ isAuthenticated });
-    console.log({ expirationTime, now: new Date() });
+    const expirationTime = newAuthToken.expiresAt || new Date();
+    let isAuthenticated = false;
+    if (newAuthToken.expiresAt && newAuthToken.expiresAt.getTime() > now) {
+      isAuthenticated = true;
+    }
     set({ authToken: newAuthToken, expirationTime, isAuthenticated });
   },
 }));
 
 export type AuthTokenRouterProps = {
   authToken?: AuthToken;
-  expirationTime: Date;
   router: NextRouter;
 };
 export const routeToLoginWhenAuthTokenExpired = ({
   authToken,
-  expirationTime,
   router,
 }: AuthTokenRouterProps) => {
   if (!authToken) {
-    console.log("Waiting for auth token...");
   } else {
     const now = new Date();
-    if (now >= expirationTime) {
-      console.log("expiration passed");
-      console.log({ expirationTime, now });
+    if (authToken.expiresAt && now >= authToken.expiresAt) {
       router.push({
         pathname: "/account/login",
       });
-    } else {
-      console.log("Login token still valid");
     }
   }
 };
