@@ -118,7 +118,7 @@ export default function FormLogin(props: Props) {
         </button>
       </form>
       <div>
-        <Link href="/account/register">
+        <Link href="/account/create">
           <a>Create account</a>
         </Link>
       </div>
