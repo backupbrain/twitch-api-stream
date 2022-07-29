@@ -74,4 +74,12 @@ export class HttpInternalServerError extends HttpError {
   }
 }
 
-// TODO: implement bandwidth throttling and payment errors
+export class HttpTooManyRequestsError extends HttpError {
+  constructor(message?: string) {
+    super(message, 429);
+    // Set the prototype explicitly.
+    Object.setPrototypeOf(this, HttpTooManyRequestsError.prototype);
+  }
+}
+
+// TODO: implement payment errors

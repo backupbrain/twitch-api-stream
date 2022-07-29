@@ -9,6 +9,7 @@ import { HttpInvalidInputError, HttpUnauthorizedError } from "../errors";
 import { logout } from "../functions/account/logout";
 import { create } from "../functions/account/create";
 import { verifyUser } from "../functions/account/verifyUser";
+import { getUsageStats } from "../functions/rateLimit/getUsageStats";
 
 /**
  * Register
@@ -21,7 +22,6 @@ class RegistrationRequest {
 router.post(
   "/create",
   async (request: Request, response: Response, next: NextFunction) => {
-    console.log({ body: request.body });
     const registrationRequest = new RegistrationRequest();
     registrationRequest.username = request.body.username;
     registrationRequest.password = request.body.password;
@@ -152,3 +152,20 @@ router.post(
 );
 
 // TODO: reset and change password
+
+router.get(
+  "/stats",
+  requireLogin,
+  async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.adminUser || !req.accessToken) {
+      next(new HttpUnauthorizedError("Unauthorized"));
+      return;
+    }
+    try {
+      const { userId, ...stats } = await getUsageStats({ user: req.adminUser });
+      res.json(stats);
+    } catch (err) {
+      return next(err);
+    }
+  }
+);

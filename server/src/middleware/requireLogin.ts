@@ -1,7 +1,8 @@
 import { prisma } from "../database/prisma";
 import { Response, NextFunction } from "express";
 import { Request } from "../types";
-import { HttpForbiddenError, HttpUnauthorizedError } from "../errors";
+import { HttpForbiddenError, HttpTooManyRequestsError } from "../errors";
+import { incrementUsageStats } from "../functions/rateLimit/incrementUsageStats";
 
 /**
  * Verify that there are certain headers in the request
@@ -38,5 +39,18 @@ export const requireLogin = async (
   }
   req.accessToken = authToken;
   req.adminUser = authToken.user = authToken.user;
+  // increment the number of api calls
+  try {
+    const usageStats = await incrementUsageStats({
+      user: req.adminUser,
+    });
+    if (usageStats.numApiCallsRemainingInBillingPeriod <= 0) {
+      return next(
+        new HttpTooManyRequestsError("Please upgrade to get more api calls")
+      );
+    }
+  } catch (error) {
+    return next(error);
+  }
   return next();
 };
