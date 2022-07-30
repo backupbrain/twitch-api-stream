@@ -118,14 +118,14 @@ router.post(
 router.post(
   "/refresh",
   requireLogin,
-  async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.accessToken) {
+  async (request: Request, response: Response, next: NextFunction) => {
+    if (!request.accessToken) {
       next(new HttpUnauthorizedError("Unauthorized"));
       return;
     }
-    const accessToken = req.accessToken.token;
+    const accessToken = request.accessToken.token;
     const updatedToken = await refreshAuthToken({ accessToken });
-    res.json(updatedToken);
+    response.json(updatedToken);
   }
 );
 
@@ -136,15 +136,15 @@ router.post(
 router.post(
   "/logout",
   requireLogin,
-  async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.adminUser || !req.accessToken) {
+  async (request: Request, response: Response, next: NextFunction) => {
+    if (!request.adminUser || !request.accessToken) {
       next(new HttpUnauthorizedError("Unauthorized"));
       return;
     }
-    const accessToken = req.accessToken.token;
+    const accessToken = request.accessToken.token;
     try {
       const updatedAuthToken = await logout({ accessToken });
-      res.json(updatedAuthToken);
+      response.json(updatedAuthToken);
     } catch (err) {
       return next(err);
     }
@@ -156,14 +156,16 @@ router.post(
 router.get(
   "/stats",
   requireLogin,
-  async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.adminUser || !req.accessToken) {
+  async (request: Request, response: Response, next: NextFunction) => {
+    if (!request.adminUser || !request.accessToken) {
       next(new HttpUnauthorizedError("Unauthorized"));
       return;
     }
     try {
-      const { userId, ...stats } = await getUsageStats({ user: req.adminUser });
-      res.json(stats);
+      const { userId, ...stats } = await getUsageStats({
+        user: request.adminUser,
+      });
+      response.json(stats);
     } catch (err) {
       return next(err);
     }
