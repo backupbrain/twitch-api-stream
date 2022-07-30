@@ -23,14 +23,14 @@ export const incrementUsageStats = async ({
     );
   }
   const now = new Date();
-  if (apiStats.lastApiCall) {
-    const timeSinceLastApiCall = now.getTime() - apiStats.lastApiCall.getTime();
-    if (timeSinceLastApiCall < apiRateLimitMilliseconds) {
-      throw new HttpTooManyRequestsError(
-        `Too many requests for this user. Please wait ${apiRateLimitMilliseconds} milliseconds before your next request`
-      );
-    }
-  }
+  // if (apiStats.lastApiCall) {
+  //   const timeSinceLastApiCall = now.getTime() - apiStats.lastApiCall.getTime();
+  //   if (timeSinceLastApiCall < apiRateLimitMilliseconds) {
+  //     throw new HttpTooManyRequestsError(
+  //       `Too many requests for this user. Please wait ${apiRateLimitMilliseconds} milliseconds before your next request`
+  //     );
+  //   }
+  // }
   // FIXME: fix date roll-over logic to handle long times
   // since billingPeriodEnd and now.
   if (apiStats.billingPeriodEnd > now) {
