@@ -10,6 +10,9 @@ import { logout } from "../functions/account/logout";
 import { create } from "../functions/account/create";
 import { verifyUser } from "../functions/account/verifyUser";
 import { getUsageStats } from "../functions/rateLimit/getUsageStats";
+import { changePassword } from "../functions/account/changePassword";
+import { requestPasswordReset } from "../functions/account/requestPasswordReset";
+import { setPasswordForUsername } from "../functions/account/setPasswordForUsername";
 
 /**
  * Register
@@ -21,7 +24,7 @@ class RegistrationRequest {
 }
 router.post(
   "/create",
-  async (request: Request, response: Response, next: NextFunction) => {
+  async (request: express.Request, response: Response, next: NextFunction) => {
     const registrationRequest = new RegistrationRequest();
     registrationRequest.username = request.body.username;
     registrationRequest.password = request.body.password;
@@ -56,7 +59,7 @@ class VerifyRegistrationRequest {
 }
 router.post(
   "/verify",
-  async (request: Request, response: Response, next: NextFunction) => {
+  async (request: express.Request, response: Response, next: NextFunction) => {
     const requestData = new VerifyRegistrationRequest();
     requestData.username = request.body.username;
     requestData.verificationToken = request.body.verificationToken;
@@ -88,7 +91,7 @@ class LoginRequest {
 }
 router.post(
   "/login",
-  async (request: Request, response: Response, next: NextFunction) => {
+  async (request: express.Request, response: Response, next: NextFunction) => {
     const loginRequest = new LoginRequest();
     loginRequest.username = request.body.username;
     loginRequest.password = request.body.password;
@@ -119,11 +122,7 @@ router.post(
   "/refresh",
   requireLogin,
   async (request: Request, response: Response, next: NextFunction) => {
-    if (!request.accessToken) {
-      next(new HttpUnauthorizedError("Unauthorized"));
-      return;
-    }
-    const accessToken = request.accessToken.token;
+    const accessToken = request.accessToken!.token;
     const updatedToken = await refreshAuthToken({ accessToken });
     response.json(updatedToken);
   }
@@ -137,11 +136,7 @@ router.post(
   "/logout",
   requireLogin,
   async (request: Request, response: Response, next: NextFunction) => {
-    if (!request.adminUser || !request.accessToken) {
-      next(new HttpUnauthorizedError("Unauthorized"));
-      return;
-    }
-    const accessToken = request.accessToken.token;
+    const accessToken = request.accessToken!.token;
     try {
       const updatedAuthToken = await logout({ accessToken });
       response.json(updatedAuthToken);
@@ -153,17 +148,107 @@ router.post(
 
 // TODO: reset and change password
 
+class ChangePasswordRequest {
+  oldPassword!: string;
+  newPassword!: string;
+}
+router.post(
+  "/password/change",
+  async (request: Request, response: Response, next: NextFunction) => {
+    const changePasswordRequest = new ChangePasswordRequest();
+    changePasswordRequest.oldPassword = request.body.oldPassword;
+    changePasswordRequest.newPassword = request.body.newPassword;
+    try {
+      await validateOrReject(changePasswordRequest);
+    } catch (errors) {
+      console.log({ errors });
+      console.log(errors);
+      next(new HttpInvalidInputError(errors));
+      return;
+    }
+    const oldPassword = changePasswordRequest.oldPassword;
+    const newPassword = changePasswordRequest.newPassword;
+    await changePassword({
+      user: request.adminUser!,
+      oldPassword,
+      newPassword,
+    });
+    response.json({ status: "success", message: "Password was changed." });
+  }
+);
+
+class CreatePasswordResetRequestRequest {
+  @IsEmail()
+  username!: string;
+}
+router.post(
+  "/password/reset",
+  async (request: Request, response: Response, next: NextFunction) => {
+    const passwordResetRequest = new CreatePasswordResetRequestRequest();
+    passwordResetRequest.username = request.body.username;
+    try {
+      await validateOrReject(passwordResetRequest);
+    } catch (errors) {
+      console.log({ errors });
+      console.log(errors);
+      next(new HttpInvalidInputError(errors));
+      return;
+    }
+    const username = passwordResetRequest.username;
+    const user = await requestPasswordReset({
+      username,
+    });
+    // TODO send email
+    console.log(
+      `User ${username} requested password reset with verification code: ${user.resetPasswordToken}`
+    );
+    response.json({
+      status: "success",
+      message: "A confirmation token was sent to your email address.",
+    });
+  }
+);
+
+class ResetPasswordChangeRequest {
+  @IsEmail()
+  username!: string;
+  password!: string;
+  token!: string;
+}
+router.post(
+  "/password/reset/set",
+  async (request: Request, response: Response, next: NextFunction) => {
+    const passwordChangeRequest = new ResetPasswordChangeRequest();
+    passwordChangeRequest.username = request.body.username;
+    passwordChangeRequest.password = request.body.password;
+    passwordChangeRequest.token = request.body.token;
+    try {
+      await validateOrReject(passwordChangeRequest);
+    } catch (errors) {
+      console.log({ errors });
+      console.log(errors);
+      next(new HttpInvalidInputError(errors));
+      return;
+    }
+    const username = passwordChangeRequest.username;
+    const password = passwordChangeRequest.password;
+    const resetPasswordToken = passwordChangeRequest.token;
+    await setPasswordForUsername({
+      username,
+      password,
+      resetPasswordToken,
+    });
+    response.json({ status: "success", message: "Password was changed." });
+  }
+);
+
 router.get(
   "/stats",
   requireLogin,
   async (request: Request, response: Response, next: NextFunction) => {
-    if (!request.adminUser || !request.accessToken) {
-      next(new HttpUnauthorizedError("Unauthorized"));
-      return;
-    }
     try {
       const { userId, ...stats } = await getUsageStats({
-        user: request.adminUser,
+        user: request.adminUser!,
       });
       response.json(stats);
     } catch (err) {

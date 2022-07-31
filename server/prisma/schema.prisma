@@ -12,16 +12,19 @@ datasource db {
 }
 
 model User {
-  id                 String        @id @default(uuid())
-  username           String        @unique
-  hashedPassword     String
-  isConfirmed        Boolean       @default(false)
-  verificationToken  String?
-  resetPasswordToken String?
-  createdAt          DateTime      @default(now())
-  accessToken        AccessToken[]
-  apiKey             ApiKey[]
-  apiStats           ApiStats?
+  id                           String        @id @default(uuid())
+  username                     String        @unique
+  hashedPassword               String
+  isConfirmed                  Boolean       @default(false)
+  verificationToken            String?
+  resetPasswordToken           String?
+  resetPasswordTokenExpiration DateTime?
+  createdAt                    DateTime      @default(now())
+  stripeCustomerId             String        @default("invalid")
+  stripeSubscriptionId         String?
+  accessToken                  AccessToken[]
+  apiKey                       ApiKey[]
+  apiStats                     ApiStats?
 }
 
 model AccessToken {
