@@ -26,6 +26,11 @@ export const makePaymentMethodPrimary = async ({
       if (!existingPaymentMethod) {
         throw new HttpNotFoundError("Payment method not found");
       }
+      if (user.stripeSubscriptionId) {
+        await stripe.subscriptions.update(user.stripeSubscriptionId, {
+          default_payment_method: existingPaymentMethod.stripePaymentMethodId,
+        });
+      }
       await prisma.paymentMethod.updateMany({
         where: {
           userId: user.id,
