@@ -1,4 +1,4 @@
-import express, { Response, NextFunction, json } from "express";
+import express, { Response, NextFunction } from "express";
 export const router = express.Router();
 import { Request } from "../types";
 import { login } from "../functions/account/login";
