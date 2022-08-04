@@ -12,19 +12,20 @@ datasource db {
 }
 
 model User {
-  id                           String        @id @default(uuid())
-  username                     String        @unique
+  id                           String          @id @default(uuid())
+  username                     String          @unique
   hashedPassword               String
-  isConfirmed                  Boolean       @default(false)
+  isConfirmed                  Boolean         @default(false)
   verificationToken            String?
   resetPasswordToken           String?
   resetPasswordTokenExpiration DateTime?
-  createdAt                    DateTime      @default(now())
-  stripeCustomerId             String        @default("invalid")
+  createdAt                    DateTime        @default(now())
+  stripeCustomerId             String          @default("invalid")
   stripeSubscriptionId         String?
   accessToken                  AccessToken[]
   apiKey                       ApiKey[]
   apiStats                     ApiStats?
+  PaymentMethod                PaymentMethod[]
 }
 
 model AccessToken {
@@ -56,4 +57,19 @@ model ApiStats {
   numApiCallsRemainingInBillingPeriod Int
   numApiCallsAllowedInPeriod          Int
   lastApiCall                         DateTime?
+}
+
+model PaymentMethod {
+  id                    String   @id @default(uuid())
+  stripePaymentMethodId String
+  nickname              String?
+  last4                 String
+  brand                 String
+  funding               String
+  expirationMonth       String
+  expirationYear        String
+  isPrimary             Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                String
 }

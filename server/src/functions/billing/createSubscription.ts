@@ -4,7 +4,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2020-08-27",
 });
 
-const priceIds = [
+export const priceIds = [
   "price_1LRYZFFXDDb4rrbhP47KpuoU", // Basic
   "price_1LRYf8FXDDb4rrbh9fAhKiVc", // Intermediate
   "price_1LRYhoFXDDb4rrbhYbcSMtsM", // Advanced
