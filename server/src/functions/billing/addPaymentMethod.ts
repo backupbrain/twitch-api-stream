@@ -33,7 +33,7 @@ export const addPaymentMethod = async ({
         invoice_settings: { default_payment_method: paymentMethod.id },
       });
     }
-    const createdPaymentMethod = await prisma.paymentMethods.create({
+    const createdPaymentMethod = await prisma.paymentMethod.create({
       data: {
         userId: user.id,
         stripePaymentMethodId: paymentMethod.id,

@@ -6,8 +6,8 @@ export type Props = {
 };
 export const getPaymentMethods = async ({
   user,
-}: Props): Promise<PaymentMethod> => {
-  const paymentMethods = await prisma.paymentMethods.findMany({
+}: Props): Promise<PaymentMethod[]> => {
+  const paymentMethods = await prisma.paymentMethod.findMany({
     where: {
       userId: user.id,
     },

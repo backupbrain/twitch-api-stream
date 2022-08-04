@@ -82,4 +82,12 @@ export class HttpTooManyRequestsError extends HttpError {
   }
 }
 
+export class HttpNotFoundError extends HttpError {
+  constructor(message?: string) {
+    super(message, 404);
+    // Set the prototype explicitly.
+    Object.setPrototypeOf(this, HttpNotFoundError.prototype);
+  }
+}
+
 // TODO: implement payment errors

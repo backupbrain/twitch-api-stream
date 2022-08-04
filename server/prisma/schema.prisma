@@ -63,11 +63,11 @@ model PaymentMethod {
   id                    String   @id @default(uuid())
   stripePaymentMethodId String
   nickname              String?
-  last4                 String
-  brand                 String
-  funding               String
-  expirationMonth       String
-  expirationYear        String
+  last4                 String?
+  brand                 String?
+  funding               String?
+  expirationMonth       Int?
+  expirationYear        Int?
   isPrimary             Boolean  @default(false)
   createdAt             DateTime @default(now())
   user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
