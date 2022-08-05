@@ -5,6 +5,7 @@ import { addPaymentMethod } from "../functions/billing/addPaymentMethod";
 import { getPaymentMethod } from "../functions/billing/getPaymentMethod";
 import { getPaymentMethods } from "../functions/billing/getPaymentMethods";
 import { removePaymentMethod } from "../functions/billing/removePaymentMethod";
+import { updatePaymentMethod } from "../functions/billing/updatePaymentMethod";
 import { requireLogin } from "../middleware/requireLogin";
 import { Request } from "../types";
 export const router = express.Router();
@@ -79,6 +80,44 @@ router.get(
       const paymentMethod = await getPaymentMethod({
         user: request.adminUser,
         id,
+      });
+      // TODO: remove stripe informtion
+      return response.json(paymentMethod);
+    } catch (error: unknown) {
+      return next(error);
+    }
+  }
+);
+
+class UpdatePaymentMethodRequest {
+  primary!: boolean;
+  nickname?: string;
+}
+router.post(
+  "/:id",
+  requireLogin,
+  async (request: Request, response: Response, next: NextFunction) => {
+    if (!request.adminUser) {
+      return next(new HttpUnauthorizedError("Unauthorized"));
+    }
+    const id = request.params.id;
+    const updatePaymentMethodRequest = new UpdatePaymentMethodRequest();
+    updatePaymentMethodRequest.primary = request.body.primary;
+    updatePaymentMethodRequest.nickname = request.body.nickname;
+    try {
+      await validateOrReject(updatePaymentMethodRequest);
+    } catch (errors) {
+      console.log({ errors });
+      return next(new HttpInvalidInputError(errors));
+    }
+    const isPrimary = updatePaymentMethodRequest.primary;
+    const nickname = updatePaymentMethodRequest.nickname;
+    try {
+      const paymentMethod = await updatePaymentMethod({
+        user: request.adminUser,
+        id,
+        isPrimary,
+        nickname,
       });
       // TODO: remove stripe informtion
       return response.json(paymentMethod);
