@@ -10,7 +10,7 @@ export type Props = {
   user: User;
   stripeToken: string;
   primary: boolean;
-  nickname: string;
+  nickname?: string;
 };
 export const addPaymentMethod = async ({
   user,

@@ -1,2 +1,109 @@
+import { validateOrReject } from "class-validator";
 import express, { Response, NextFunction, json } from "express";
+import { HttpInvalidInputError, HttpUnauthorizedError } from "../errors";
+import { addPaymentMethod } from "../functions/billing/addPaymentMethod";
+import { getPaymentMethod } from "../functions/billing/getPaymentMethod";
+import { getPaymentMethods } from "../functions/billing/getPaymentMethods";
+import { removePaymentMethod } from "../functions/billing/removePaymentMethod";
+import { requireLogin } from "../middleware/requireLogin";
+import { Request } from "../types";
 export const router = express.Router();
+
+router.get(
+  "/",
+  requireLogin,
+  async (request: Request, response: Response, next: NextFunction) => {
+    if (!request.adminUser) {
+      return next(new HttpUnauthorizedError("Unauthorized"));
+    }
+    try {
+      const paymentMethods = await getPaymentMethods({
+        user: request.adminUser,
+      });
+      // TODO: remove stripePaymentMethod information
+      return response.json(paymentMethods);
+    } catch (error: unknown) {
+      return next(error);
+    }
+  }
+);
+
+class CreatePaymentMethodRequest {
+  stripeToken!: string;
+  primary!: boolean;
+  nickname?: string;
+}
+router.post(
+  "/create",
+  requireLogin,
+  async (request: Request, response: Response, next: NextFunction) => {
+    if (!request.adminUser) {
+      return next(new HttpUnauthorizedError("Unauthorized"));
+    }
+    const createPaymentMethodRequest = new CreatePaymentMethodRequest();
+    createPaymentMethodRequest.stripeToken = request.body.stripeToken;
+    createPaymentMethodRequest.primary = request.body.primary;
+    createPaymentMethodRequest.nickname = request.body.nickname;
+    try {
+      await validateOrReject(createPaymentMethodRequest);
+    } catch (errors) {
+      console.log({ errors });
+      return next(new HttpInvalidInputError(errors));
+    }
+    const stripeToken = createPaymentMethodRequest.stripeToken;
+    const primary = createPaymentMethodRequest.primary;
+    const nickname = createPaymentMethodRequest.nickname;
+    try {
+      const paymentMethod = await addPaymentMethod({
+        user: request.adminUser,
+        stripeToken,
+        primary,
+        nickname,
+      });
+      return response.json(paymentMethod);
+    } catch (error: unknown) {
+      return next(error);
+    }
+  }
+);
+
+router.get(
+  "/:id",
+  requireLogin,
+  async (request: Request, response: Response, next: NextFunction) => {
+    if (!request.adminUser) {
+      return next(new HttpUnauthorizedError("Unauthorized"));
+    }
+    const id = request.params.id;
+    try {
+      const paymentMethod = await getPaymentMethod({
+        user: request.adminUser,
+        id,
+      });
+      // TODO: remove stripe informtion
+      return response.json(paymentMethod);
+    } catch (error: unknown) {
+      return next(error);
+    }
+  }
+);
+
+router.delete(
+  "/:id",
+  requireLogin,
+  async (request: Request, response: Response, next: NextFunction) => {
+    if (!request.adminUser) {
+      return next(new HttpUnauthorizedError("Unauthorized"));
+    }
+    const id = request.params.id;
+    try {
+      await removePaymentMethod({
+        user: request.adminUser,
+        id,
+      });
+      return response.json({ status: "sucess" });
+    } catch (error: unknown) {
+      return next(error);
+    }
+  }
+);
