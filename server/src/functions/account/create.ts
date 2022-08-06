@@ -6,6 +6,7 @@ import { hashPassword } from "../utils/hashPassword";
 import { getFutureDateByMonths } from "../utils/getFutureDateByMonths";
 import { createStripeCustomer } from "../billing/createStripeCustomer";
 import { createSubscription } from "../billing/createSubscription";
+import { addPaymentMethod } from "../billing/addPaymentMethod";
 
 const defaultNumApiCallsAllowedInPeriod = 1000;
 
@@ -13,12 +14,14 @@ export type Props = {
   username: string;
   password: string;
   stripePriceId?: string;
+  stripeToken?: string;
 };
 
 export const create = async ({
   username,
   password,
   stripePriceId,
+  stripeToken,
 }: Props): Promise<User> => {
   const hashedPassword = hashPassword({ password });
   const verificationToken = createOneTimePassword({});
@@ -44,8 +47,16 @@ export const create = async ({
           isConfirmed: false,
           stripeCustomerId: stripeCustomer.id,
           stripeSubscriptionId,
+          stripePriceId,
         },
       });
+      if (stripeToken) {
+        await addPaymentMethod({
+          user,
+          stripeToken,
+          primary: true,
+        });
+      }
       const now = new Date();
       const billingPeriodEnd = getFutureDateByMonths({
         date: now,

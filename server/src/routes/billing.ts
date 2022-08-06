@@ -1,10 +1,11 @@
-import { validateOrReject } from "class-validator";
+import { useContainer, validateOrReject } from "class-validator";
 import express, { Response, NextFunction, json } from "express";
 import { HttpInvalidInputError, HttpUnauthorizedError } from "../errors";
 import { addPaymentMethod } from "../functions/billing/addPaymentMethod";
 import { getPaymentMethod } from "../functions/billing/getPaymentMethod";
 import { getPaymentMethods } from "../functions/billing/getPaymentMethods";
 import { removePaymentMethod } from "../functions/billing/removePaymentMethod";
+import { switchSubscriptionPlan } from "../functions/billing/switchSubscriptionPlan";
 import { updatePaymentMethod } from "../functions/billing/updatePaymentMethod";
 import { requireLogin } from "../middleware/requireLogin";
 import { Request } from "../types";
@@ -141,6 +142,49 @@ router.delete(
         id,
       });
       return response.json({ status: "sucess" });
+    } catch (error: unknown) {
+      return next(error);
+    }
+  }
+);
+
+router.get(
+  "/subscription",
+  requireLogin,
+  async (request: Request, response: Response, next: NextFunction) => {
+    if (!request.adminUser) {
+      return next(new HttpUnauthorizedError("Unauthorized"));
+    }
+    return response.json({ id: request.adminUser.stripePriceId });
+  }
+);
+
+class UpdateSubscriptionPlanRequest {
+  id!: string;
+}
+router.post(
+  "/subscription",
+  requireLogin,
+  async (request: Request, response: Response, next: NextFunction) => {
+    if (!request.adminUser) {
+      return next(new HttpUnauthorizedError("Unauthorized"));
+    }
+    const updateSubscriptionPlanRequest = new UpdateSubscriptionPlanRequest();
+    updateSubscriptionPlanRequest.id = request.body.id;
+    try {
+      await validateOrReject(updateSubscriptionPlanRequest);
+    } catch (errors) {
+      console.log({ errors });
+      return next(new HttpInvalidInputError(errors));
+    }
+    const stripePriceId = updateSubscriptionPlanRequest.id;
+    try {
+      const subscription = await switchSubscriptionPlan({
+        user: request.adminUser,
+        stripePriceId,
+      });
+      // TODO: remove stripePaymentMethod information
+      return response.json(subscription);
     } catch (error: unknown) {
       return next(error);
     }

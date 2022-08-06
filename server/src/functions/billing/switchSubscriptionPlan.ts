@@ -1,5 +1,6 @@
 import { User } from "@prisma/client";
 import Stripe from "stripe";
+import { prisma } from "../../database/prisma";
 import { HttpInvalidInputError } from "../../errors";
 import { createSubscription, priceIds } from "./createSubscription";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -44,6 +45,10 @@ export const switchSubscriptionPlan = async ({
         ],
       }
     );
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { stripePriceId },
+    });
     return updatedSubscription;
   } catch (error: any) {
     throw new HttpInvalidInputError(error.message);

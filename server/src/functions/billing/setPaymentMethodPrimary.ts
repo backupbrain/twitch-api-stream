@@ -10,7 +10,7 @@ export type Props = {
   user: User;
   id: string;
 };
-export const makePaymentMethodPrimary = async ({
+export const setPaymentMethodPrimary = async ({
   user,
   id,
 }: Props): Promise<PaymentMethod> => {

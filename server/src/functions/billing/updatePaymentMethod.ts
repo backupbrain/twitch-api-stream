@@ -2,7 +2,8 @@ import Stripe from "stripe";
 import { PaymentMethod, User } from "@prisma/client";
 import { prisma } from "../../database/prisma";
 import { HttpNotFoundError } from "../../errors";
-import { makePaymentMethodPrimary } from "./makePaymentMethodPrimary";
+import { setPaymentMethodPrimary } from "./setPaymentMethodPrimary";
+import { unsetPaymentMethodPrimary } from "./unsetPaymentMethodPrimary";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2020-08-27",
 });
@@ -29,17 +30,15 @@ export const updatePaymentMethod = async ({
     throw new HttpNotFoundError("Payment method not found");
   }
   if (isPrimary) {
-    await makePaymentMethodPrimary({
+    await setPaymentMethodPrimary({
       user,
       id,
     });
   } else {
-    // TODO: remove
-    if (user.stripeSubscriptionId) {
-      await stripe.subscriptions.update(user.stripeSubscriptionId, {
-        default_payment_method: undefined,
-      });
-    }
+    await unsetPaymentMethodPrimary({
+      user,
+      id,
+    });
   }
   const updatedPaymentMethod = await prisma.paymentMethod.update({
     where: { id },

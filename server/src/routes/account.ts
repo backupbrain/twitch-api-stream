@@ -21,6 +21,8 @@ class RegistrationRequest {
   @IsEmail()
   username!: string;
   password!: string;
+  stripeToken?: string;
+  stripePriceId?: string;
 }
 router.post(
   "/create",
@@ -28,6 +30,8 @@ router.post(
     const registrationRequest = new RegistrationRequest();
     registrationRequest.username = request.body.username;
     registrationRequest.password = request.body.password;
+    registrationRequest.stripeToken = request.body.stripeToken;
+    registrationRequest.stripePriceId = request.body.stripePriceId;
     try {
       await validateOrReject(registrationRequest);
     } catch (errors) {
@@ -36,8 +40,15 @@ router.post(
     }
     const username = registrationRequest.username;
     const password = registrationRequest.password;
+    const stripeToken = registrationRequest.stripeToken;
+    const stripePriceId = registrationRequest.stripePriceId;
     try {
-      const user = await create({ username, password });
+      const user = await create({
+        username,
+        password,
+        stripeToken,
+        stripePriceId,
+      });
       // TODO send email
       console.log(
         `User ${username} created with verification code: ${user.verificationToken}`
