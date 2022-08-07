@@ -3,6 +3,8 @@ declare global {
     interface ProcessEnv {
       DATABASE_URL: string;
       HTTP_PORT: string;
+      STRIPE_SECRET_KEY: string;
+      STRIPE_WEBHOOK_ENDPOINT_SECRET: string;
     }
   }
 }
