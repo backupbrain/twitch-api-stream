@@ -9,6 +9,7 @@ import { switchSubscriptionPlan } from "../functions/billing/switchSubscriptionP
 import { updatePaymentMethod } from "../functions/billing/updatePaymentMethod";
 import { requireLogin } from "../middleware/requireLogin";
 import { Request } from "../types";
+import { successResponse } from "./responses";
 export const router = express.Router();
 
 router.get(
@@ -23,7 +24,7 @@ router.get(
         user: request.adminUser,
       });
       // TODO: remove stripePaymentMethod information
-      return response.json(paymentMethods);
+      return response.json(successResponse({ data: paymentMethods }));
     } catch (error: unknown) {
       return next(error);
     }
@@ -62,7 +63,12 @@ router.post(
         primary,
         nickname,
       });
-      return response.json(paymentMethod);
+      return response.json(
+        successResponse({
+          message: "payment_method_created",
+          data: paymentMethod,
+        })
+      );
     } catch (error: unknown) {
       return next(error);
     }
@@ -83,7 +89,7 @@ router.get(
         id,
       });
       // TODO: remove stripe informtion
-      return response.json(paymentMethod);
+      return response.json(successResponse({ data: paymentMethod }));
     } catch (error: unknown) {
       return next(error);
     }
@@ -121,7 +127,12 @@ router.post(
         nickname,
       });
       // TODO: remove stripe informtion
-      return response.json(paymentMethod);
+      return response.json(
+        successResponse({
+          message: "payment_method_updated",
+          data: paymentMethod,
+        })
+      );
     } catch (error: unknown) {
       return next(error);
     }
@@ -141,7 +152,9 @@ router.delete(
         user: request.adminUser,
         id,
       });
-      return response.json({ status: "sucess" });
+      return response.json(
+        successResponse({ message: "payment_method_deleted" })
+      );
     } catch (error: unknown) {
       return next(error);
     }
@@ -155,7 +168,9 @@ router.get(
     if (!request.adminUser) {
       return next(new HttpUnauthorizedError("Unauthorized"));
     }
-    return response.json({ id: request.adminUser.stripePriceId });
+    return response.json(
+      successResponse({ data: { id: request.adminUser.stripePriceId } })
+    );
   }
 );
 
@@ -184,7 +199,9 @@ router.post(
         stripePriceId,
       });
       // TODO: remove stripePaymentMethod information
-      return response.json(subscription);
+      return response.json(
+        successResponse({ message: "subscription_changed", data: subscription })
+      );
     } catch (error: unknown) {
       return next(error);
     }

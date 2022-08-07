@@ -64,7 +64,7 @@ describe("", () => {
       now.getTime() - new Date(stats.lastApiCall).getTime();
     expect(timeSinceApiCall).toBeLessThan(10);
   });
-  test("Rate limit prevents fast api calls", async () => {
+  test.skip("Rate limit prevents fast api calls", async () => {
     const endpoint = "/api/1.0/account/stats";
     const response = await request(app)
       .get(endpoint)

@@ -13,6 +13,7 @@ import { getUsageStats } from "../functions/rateLimit/getUsageStats";
 import { changePassword } from "../functions/account/changePassword";
 import { requestPasswordReset } from "../functions/account/requestPasswordReset";
 import { setPasswordForUsername } from "../functions/account/setPasswordForUsername";
+import { successResponse } from "./responses";
 
 /**
  * Register
@@ -53,7 +54,7 @@ router.post(
       console.log(
         `User ${username} created with verification code: ${user.verificationToken}`
       );
-      return response.json({ status: "success" });
+      return response.json(successResponse({ message: "user_created" }));
     } catch (error: unknown) {
       return next(error);
     }
@@ -85,7 +86,7 @@ router.post(
     const verificationToken = requestData.verificationToken;
     try {
       await verifyUser({ username, verificationToken });
-      return response.json({ status: "success" });
+      return response.json(successResponse({ message: "user_verified" }));
     } catch (error: unknown) {
       return next(error);
     }
@@ -118,7 +119,12 @@ router.post(
     const password = loginRequest.password;
     try {
       const tokenData = await login({ username, password });
-      return response.json(tokenData);
+      return response.json(
+        successResponse({
+          message: "user_logged_in",
+          data: tokenData,
+        })
+      );
     } catch (error: unknown) {
       return next(error);
     }
@@ -135,7 +141,12 @@ router.post(
   async (request: Request, response: Response, next: NextFunction) => {
     const accessToken = request.accessToken!.token;
     const updatedToken = await refreshAuthToken({ accessToken });
-    response.json(updatedToken);
+    response.json(
+      successResponse({
+        message: "login_token_refreshed",
+        data: updatedToken,
+      })
+    );
   }
 );
 
@@ -150,7 +161,12 @@ router.post(
     const accessToken = request.accessToken!.token;
     try {
       const updatedAuthToken = await logout({ accessToken });
-      response.json(updatedAuthToken);
+      response.json(
+        successResponse({
+          message: "user_logged_out",
+          data: updatedAuthToken,
+        })
+      );
     } catch (err) {
       return next(err);
     }
@@ -184,7 +200,7 @@ router.post(
       oldPassword,
       newPassword,
     });
-    response.json({ status: "success", message: "Password was changed." });
+    response.json(successResponse({ message: "password_changed" }));
   }
 );
 
@@ -213,10 +229,11 @@ router.post(
     console.log(
       `User ${username} requested password reset with verification code: ${user.resetPasswordToken}`
     );
-    response.json({
-      status: "success",
-      message: "A confirmation token was sent to your email address.",
-    });
+    response.json(
+      successResponse({
+        message: "password_reset_token_created",
+      })
+    );
   }
 );
 
@@ -249,7 +266,7 @@ router.post(
       password,
       resetPasswordToken,
     });
-    response.json({ status: "success", message: "Password was changed." });
+    response.json(successResponse({ message: "password_changed" }));
   }
 );
 
@@ -261,7 +278,7 @@ router.get(
       const { userId, ...stats } = await getUsageStats({
         user: request.adminUser!,
       });
-      response.json(stats);
+      response.json(successResponse({ data: stats }));
     } catch (err) {
       return next(err);
     }
