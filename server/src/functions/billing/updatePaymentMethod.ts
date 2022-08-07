@@ -1,12 +1,8 @@
-import Stripe from "stripe";
 import { PaymentMethod, User } from "@prisma/client";
 import { prisma } from "../../database/prisma";
 import { HttpNotFoundError } from "../../errors";
 import { setPaymentMethodPrimary } from "./setPaymentMethodPrimary";
 import { unsetPaymentMethodPrimary } from "./unsetPaymentMethodPrimary";
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2020-08-27",
-});
 
 export type Props = {
   user: User;

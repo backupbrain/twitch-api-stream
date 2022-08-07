@@ -3,6 +3,7 @@ import { Request } from "./types";
 import { HttpError, HttpInvalidInputError } from "./errors";
 import cors from "cors";
 import { router } from "./routes";
+import canonicalize from "canonicalize";
 
 export const app = express();
 app.use(cors());
@@ -12,10 +13,12 @@ app.use("/", router);
 
 // Handle undefined routes
 app.use((request: Request, response: Response, next: NextFunction) => {
-  response.status(404).json({
-    status: "error",
-    message: "Resource doesn't exist",
-  });
+  response.status(404).send(
+    canonicalize({
+      status: "error",
+      message: "resource_not_found",
+    })
+  );
 });
 
 // error handling
@@ -29,20 +32,22 @@ app.use(
     if (error.status === 400) {
       // TODO: build error details
       const inputError = error as HttpInvalidInputError;
-      res.status(inputError.status || 500).send({
-        error: {
+      res.status(inputError.status || 400).send(
+        canonicalize({
           status: "error",
-          message: inputError.message || "Invalid input",
+          code: inputError.status || 400,
+          message: inputError.message || "invalid_input",
           details: inputError.getRestDetails(),
-        },
-      });
+        })
+      );
     } else {
-      res.status(error.status || 500).send({
-        error: {
-          status: error.status || 500,
-          message: error.message || "Internal Server Error",
-        },
-      });
+      res.status(error.status || 500).send(
+        canonicalize({
+          status: "error",
+          code: error.status || 500,
+          message: error.message || "internal_server_error",
+        })
+      );
     }
   }
 );

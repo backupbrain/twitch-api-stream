@@ -1,8 +1,6 @@
+import { stripe } from "../utils/stripe";
 import Stripe from "stripe";
 import { HttpInvalidInputError } from "../../errors";
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2020-08-27",
-});
 
 export const priceIds = [
   "price_1LRYZFFXDDb4rrbhP47KpuoU", // Basic
