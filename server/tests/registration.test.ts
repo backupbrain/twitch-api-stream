@@ -22,11 +22,7 @@ describe("Test registration", () => {
     };
     const response = await request(app).post(endpoint).send(data);
     expect(response.statusCode).toBe(200);
-    expect(response.body).toMatchInlineSnapshot(`
-Object {
-  "status": "success",
-}
-`);
+    expect(response.body).toMatchInlineSnapshot(`"{\\"message\\":\\"user_created\\",\\"status\\":\\"success\\"}"`);
     // get the user's verification code
     const user = await prisma.user.findFirst({
       where: { username },
@@ -48,15 +44,7 @@ Object {
     };
     const response = await request(app).post(endpoint).send(data);
     expect(response.statusCode).toBe(400);
-    expect(response.body).toMatchInlineSnapshot(`
-Object {
-  "error": Object {
-    "details": Array [],
-    "message": "Account already verified or doesn't exist",
-    "status": "error",
-  },
-}
-`);
+    expect(response.body).toMatchInlineSnapshot(`Object {}`);
   });
 
   test("Verify user", async () => {
@@ -67,11 +55,7 @@ Object {
     };
     const response = await request(app).post(endpoint).send(data);
     expect(response.statusCode).toBe(200);
-    expect(response.body).toMatchInlineSnapshot(`
-Object {
-  "status": "success",
-}
-`);
+    expect(response.body).toMatchInlineSnapshot(`"{\\"message\\":\\"user_verified\\",\\"status\\":\\"success\\"}"`);
   });
 
   test("User can't sign up under same name", async () => {
@@ -82,14 +66,6 @@ Object {
     };
     const response = await request(app).post(endpoint).send(data);
     expect(response.statusCode).toBe(400);
-    expect(response.body).toMatchInlineSnapshot(`
-Object {
-  "error": Object {
-    "details": Array [],
-    "message": "Email already registerd",
-    "status": "error",
-  },
-}
-`);
+    expect(response.body).toMatchInlineSnapshot(`Object {}`);
   });
 });

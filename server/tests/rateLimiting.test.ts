@@ -43,7 +43,7 @@ describe("", () => {
       .get(endpoint)
       .set("Authorization", `${authToken.tokenType} ${authToken.accessToken}`);
     expect(response.statusCode).toBe(200);
-    const stats = response.body;
+    const stats = response.body.data;
     expect(stats.accountBirthday).toBe(apiStats.accountBirthday.toISOString());
     expect(stats.billingPeriodEnd).toBe(
       apiStats.billingPeriodEnd.toISOString()

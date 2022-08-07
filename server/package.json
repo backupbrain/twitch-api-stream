@@ -36,6 +36,7 @@
   "dependencies": {
     "@prisma/client": "^4.0.0",
     "bcrypt": "^5.0.1",
+    "canonicalize": "^1.0.8",
     "class-validator": "^0.13.2",
     "cors": "^2.8.5",
     "dotenv": "^16.0.1",

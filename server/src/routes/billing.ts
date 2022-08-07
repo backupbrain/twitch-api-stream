@@ -24,7 +24,7 @@ router.get(
         user: request.adminUser,
       });
       // TODO: remove stripePaymentMethod information
-      return response.json(successResponse({ data: paymentMethods }));
+      return response.send(successResponse({ data: paymentMethods }));
     } catch (error: unknown) {
       return next(error);
     }
@@ -63,7 +63,7 @@ router.post(
         primary,
         nickname,
       });
-      return response.json(
+      return response.send(
         successResponse({
           message: "payment_method_created",
           data: paymentMethod,
@@ -89,7 +89,7 @@ router.get(
         id,
       });
       // TODO: remove stripe informtion
-      return response.json(successResponse({ data: paymentMethod }));
+      return response.send(successResponse({ data: paymentMethod }));
     } catch (error: unknown) {
       return next(error);
     }
@@ -127,7 +127,7 @@ router.post(
         nickname,
       });
       // TODO: remove stripe informtion
-      return response.json(
+      return response.send(
         successResponse({
           message: "payment_method_updated",
           data: paymentMethod,
@@ -152,7 +152,7 @@ router.delete(
         user: request.adminUser,
         id,
       });
-      return response.json(
+      return response.send(
         successResponse({ message: "payment_method_deleted" })
       );
     } catch (error: unknown) {
@@ -168,7 +168,7 @@ router.get(
     if (!request.adminUser) {
       return next(new HttpUnauthorizedError("Unauthorized"));
     }
-    return response.json(
+    return response.send(
       successResponse({ data: { id: request.adminUser.stripePriceId } })
     );
   }
@@ -199,7 +199,7 @@ router.post(
         stripePriceId,
       });
       // TODO: remove stripePaymentMethod information
-      return response.json(
+      return response.send(
         successResponse({ message: "subscription_changed", data: subscription })
       );
     } catch (error: unknown) {
