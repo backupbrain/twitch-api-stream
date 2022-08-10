@@ -1,12 +1,12 @@
+import { User } from "@prisma/client";
 import request from "supertest";
 import { app } from "../src/app";
-import { User } from "@prisma/client";
 import { prisma } from "../src/database/prisma";
 import { create } from "../src/functions/account/create";
-import clearDatabase from "./setup";
 import { verifyUser } from "../src/functions/account/verifyUser";
-import { AuthToken } from "../src/types";
 import { resetUsageStats } from "../src/functions/rateLimit/resetUsageStats";
+import { AuthToken } from "../src/types";
+import clearDatabase from "./setup";
 
 const username = "user@example.com";
 const password = "password";
@@ -45,14 +45,8 @@ describe("Test login", () => {
     };
     const response = await request(app).post(endpoint).send(data);
     expect(response.statusCode).toBe(401);
-    expect(response.body).toMatchInlineSnapshot(`
-Object {
-  "error": Object {
-    "message": "Unauthorized",
-    "status": 401,
-  },
-}
-`);
+    expect(response.body.status).toBe("error");
+    expect(response.body.message).toBe("Unauthorized");
   });
   test("Login fails unconfirmed user", async () => {
     const endpoint = "/api/1.0/account/login";
@@ -62,14 +56,8 @@ Object {
     };
     const response = await request(app).post(endpoint).send(data);
     expect(response.statusCode).toBe(401);
-    expect(response.body).toMatchInlineSnapshot(`
-Object {
-  "error": Object {
-    "message": "Unauthorized",
-    "status": 401,
-  },
-}
-`);
+    expect(response.body.status).toBe("error");
+    expect(response.body.message).toBe("Unauthorized");
   });
   test("Login with correct credentials", async () => {
     const endpoint = "/api/1.0/account/login";
@@ -85,25 +73,22 @@ Object {
     if (!accessToken) {
       throw new Error("Auth token not created");
     }
-    expect(response.body.accessToken).toBe(accessToken.token);
-    expect(response.body.refreshToken).toBe(accessToken.token);
-    expect(response.body.expiresIn).toBeGreaterThan(0);
-    expect(response.body.tokenType).toBe("Bearer");
-    expect(response.body.scopes).toStrictEqual([]);
-    authToken = response.body;
+    expect(response.statusCode).toBe(200);
+    expect(response.body.status).toBe("success");
+    expect(response.body.message).toBe("user_logged_in");
+    expect(response.body.data.accessToken).toBe(accessToken.token);
+    expect(response.body.data.refreshToken).toBe(accessToken.token);
+    expect(response.body.data.expiresIn).toBeGreaterThan(0);
+    expect(response.body.data.tokenType).toBe("Bearer");
+    expect(response.body.data.scopes).toStrictEqual([]);
+    authToken = response.body.data;
   });
   test("Bad token cannot access restricted area with no authorization", async () => {
     const endpoint = "/api/1.0/account/refresh";
     const response = await request(app).post(endpoint);
     expect(response.statusCode).toBe(403);
-    expect(response.body).toMatchInlineSnapshot(`
-Object {
-  "error": Object {
-    "message": "No auth token provided",
-    "status": 403,
-  },
-}
-`);
+    expect(response.body.status).toBe("error");
+    expect(response.body.message).toBe("No auth token provided");
   });
   test("Bad token cannot access restricted area with bad authorization", async () => {
     const endpoint = "/api/1.0/account/refresh";
@@ -111,14 +96,8 @@ Object {
       .post(endpoint)
       .set("Authorization", `${authToken.tokenType} abc123`);
     expect(response.statusCode).toBe(403);
-    expect(response.body).toMatchInlineSnapshot(`
-Object {
-  "error": Object {
-    "message": "Unauthorized",
-    "status": 403,
-  },
-}
-`);
+    expect(response.body.status).toBe("error");
+    expect(response.body.message).toBe("Unauthorized");
   });
   test("Can extend auth token", async () => {
     await resetUsageStats({ user });
@@ -133,11 +112,13 @@ Object {
       throw new Error("Auth token not created");
     }
     expect(response.statusCode).toBe(200);
-    expect(response.body.accessToken).toBe(accessToken.token);
-    expect(response.body.refreshToken).toBe(accessToken.token);
-    expect(response.body.expiresIn).toBeGreaterThan(0);
-    expect(response.body.tokenType).toBe("Bearer");
-    expect(response.body.scopes).toStrictEqual([]);
+    expect(response.body.status).toBe("success");
+    expect(response.body.message).toBe("login_token_refreshed");
+    expect(response.body.data.accessToken).toBe(accessToken.token);
+    expect(response.body.data.refreshToken).toBe(accessToken.token);
+    expect(response.body.data.expiresIn).toBeGreaterThan(0);
+    expect(response.body.data.tokenType).toBe("Bearer");
+    expect(response.body.data.scopes).toStrictEqual([]);
   });
 
   test("Can log out", async () => {
@@ -146,15 +127,8 @@ Object {
     const response = await request(app)
       .post(endpoint)
       .set("Authorization", `${authToken.tokenType} ${authToken.accessToken}`);
-    expect(response.body).toMatchInlineSnapshot(`
-Object {
-  "accessToken": "${authToken.accessToken}",
-  "expiresIn": 0,
-  "refreshToken": "",
-  "scopes": Array [],
-  "tokenType": "Bearer",
-}
-`);
+    expect(response.body.status).toBe("success");
+    expect(response.body.message).toBe("user_logged_out");
     expect(response.statusCode).toBe(200);
     const accessToken = await prisma.accessToken.findFirst({
       where: {
@@ -172,13 +146,7 @@ Object {
       .post(endpoint)
       .set("Authorization", `${authToken.tokenType} ${authToken.accessToken}`);
     expect(response.statusCode).toBe(403);
-    expect(response.body).toMatchInlineSnapshot(`
-Object {
-  "error": Object {
-    "message": "Unauthorized",
-    "status": 403,
-  },
-}
-`);
+    expect(response.body.status).toBe("error");
+    expect(response.body.message).toBe("Unauthorized");
   });
 });

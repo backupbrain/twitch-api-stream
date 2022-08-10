@@ -1,19 +1,19 @@
-import express, { Response, NextFunction } from "express";
-export const router = express.Router();
-import { Request } from "../types";
-import { login } from "../functions/account/login";
-import { requireLogin } from "../middleware/requireLogin";
-import { refreshAuthToken } from "../functions/account/refreshAuthToken";
 import { IsEmail, validateOrReject } from "class-validator";
-import { HttpInvalidInputError, HttpUnauthorizedError } from "../errors";
-import { logout } from "../functions/account/logout";
-import { create } from "../functions/account/create";
-import { verifyUser } from "../functions/account/verifyUser";
-import { getUsageStats } from "../functions/rateLimit/getUsageStats";
+import express, { NextFunction, Response } from "express";
+import { HttpInvalidInputError } from "../errors";
 import { changePassword } from "../functions/account/changePassword";
+import { create } from "../functions/account/create";
+import { login } from "../functions/account/login";
+import { logout } from "../functions/account/logout";
+import { refreshAuthToken } from "../functions/account/refreshAuthToken";
 import { requestPasswordReset } from "../functions/account/requestPasswordReset";
 import { setPasswordForUsername } from "../functions/account/setPasswordForUsername";
+import { verifyUser } from "../functions/account/verifyUser";
+import { getUsageStats } from "../functions/rateLimit/getUsageStats";
+import { requireLogin } from "../middleware/requireLogin";
+import { Request } from "../types";
 import { successResponse } from "./responses";
+export const router = express.Router();
 
 /**
  * Register
@@ -54,7 +54,7 @@ router.post(
       console.log(
         `User ${username} created with verification code: ${user.verificationToken}`
       );
-      return response.send(successResponse({ message: "user_created" }));
+      return response.json(successResponse({ message: "user_created" }));
     } catch (error: unknown) {
       return next(error);
     }
@@ -86,7 +86,7 @@ router.post(
     const verificationToken = requestData.verificationToken;
     try {
       await verifyUser({ username, verificationToken });
-      return response.send(successResponse({ message: "user_verified" }));
+      return response.json(successResponse({ message: "user_verified" }));
     } catch (error: unknown) {
       return next(error);
     }
@@ -119,7 +119,7 @@ router.post(
     const password = loginRequest.password;
     try {
       const tokenData = await login({ username, password });
-      return response.send(
+      return response.json(
         successResponse({
           message: "user_logged_in",
           data: tokenData,
@@ -141,7 +141,7 @@ router.post(
   async (request: Request, response: Response, next: NextFunction) => {
     const accessToken = request.accessToken!.token;
     const updatedToken = await refreshAuthToken({ accessToken });
-    response.send(
+    response.json(
       successResponse({
         message: "login_token_refreshed",
         data: updatedToken,
@@ -161,7 +161,7 @@ router.post(
     const accessToken = request.accessToken!.token;
     try {
       const updatedAuthToken = await logout({ accessToken });
-      response.send(
+      response.json(
         successResponse({
           message: "user_logged_out",
           data: updatedAuthToken,
@@ -200,7 +200,7 @@ router.post(
       oldPassword,
       newPassword,
     });
-    response.send(successResponse({ message: "password_changed" }));
+    response.json(successResponse({ message: "password_changed" }));
   }
 );
 
@@ -229,7 +229,7 @@ router.post(
     console.log(
       `User ${username} requested password reset with verification code: ${user.resetPasswordToken}`
     );
-    response.send(
+    response.json(
       successResponse({
         message: "password_reset_token_created",
       })
@@ -266,7 +266,7 @@ router.post(
       password,
       resetPasswordToken,
     });
-    response.send(successResponse({ message: "password_changed" }));
+    response.json(successResponse({ message: "password_changed" }));
   }
 );
 
@@ -278,7 +278,7 @@ router.get(
       const { userId, ...stats } = await getUsageStats({
         user: request.adminUser!,
       });
-      response.send(successResponse({ data: stats }));
+      response.json(successResponse({ data: stats }));
     } catch (err) {
       return next(err);
     }
