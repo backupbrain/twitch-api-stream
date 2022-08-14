@@ -3,6 +3,7 @@ import express, { NextFunction, Response } from "express";
 import { HttpInvalidInputError } from "../errors";
 import { changePassword } from "../functions/account/changePassword";
 import { create } from "../functions/account/create";
+import { destroyAccount } from "../functions/account/destroy";
 import { login } from "../functions/account/login";
 import { logout } from "../functions/account/logout";
 import { refreshAuthToken } from "../functions/account/refreshAuthToken";
@@ -279,6 +280,19 @@ router.get(
         user: request.adminUser!,
       });
       response.json(successResponse({ data: stats }));
+    } catch (err) {
+      return next(err);
+    }
+  }
+);
+
+router.delete(
+  "/destroy",
+  requireLogin,
+  async (request: Request, response: Response, next: NextFunction) => {
+    try {
+      await destroyAccount({ user: request.adminUser! });
+      response.json(successResponse({ message: "user_removed" }));
     } catch (err) {
       return next(err);
     }

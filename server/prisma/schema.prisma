@@ -23,10 +23,10 @@ model User {
   stripeCustomerId             String          @default("invalid")
   stripeSubscriptionId         String?
   stripePriceId                String?
-  accessToken                  AccessToken[]
+  accessTokens                 AccessToken[]
   apiKey                       ApiKey[]
   apiStats                     ApiStats?
-  PaymentMethod                PaymentMethod[]
+  paymentMethods               PaymentMethod[]
 }
 
 model AccessToken {

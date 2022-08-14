@@ -1,16 +1,10 @@
-export type SuccessResponseType = {
-  status: string;
-  message?: string;
-  data?: any;
-};
+import { SuccessResponse } from "../types";
+
 export type Props = {
   message?: string;
   data?: any;
 };
-export const successResponse = ({
-  message,
-  data,
-}: Props): SuccessResponseType => {
+export const successResponse = ({ message, data }: Props): SuccessResponse => {
   return {
     status: "success",
     message,

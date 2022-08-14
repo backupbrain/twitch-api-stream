@@ -1,5 +1,5 @@
+import { ApiKey, User } from "@prisma/client";
 import express from "express";
-import { User, ApiKey } from "@prisma/client";
 
 export type AuthToken = {
   accessToken: string;
@@ -17,4 +17,16 @@ export type Request = express.Request & {
   adminUser?: User;
   accessToken?: HeaderAuthToken;
   apiKey?: ApiKey;
+};
+
+export type ErrorResponse = {
+  status: string;
+  message?: string;
+  details?: string[];
+};
+
+export type SuccessResponse = {
+  status: string;
+  message?: string;
+  data?: any;
 };

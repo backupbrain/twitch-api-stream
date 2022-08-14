@@ -1,7 +1,7 @@
-import { createOneTimePassword } from "../utils/createOneTimePassword";
-import { prisma } from "../../database/prisma";
-import { HttpUnauthorizedError } from "../../errors";
 import { User } from "@prisma/client";
+import { prisma } from "../../database/prisma";
+import { HttpInvalidInputError } from "../../errors";
+import { createOneTimePassword } from "../utils/createOneTimePassword";
 
 const resetPasswordTokenExpirationHours = 24;
 
@@ -18,7 +18,7 @@ export const requestPasswordReset = async ({
       },
     });
     if (!user) {
-      throw new HttpUnauthorizedError("Unauthorized");
+      throw new HttpInvalidInputError("username_not_found");
     }
     const resetPasswordToken = createOneTimePassword({});
     const resetPasswordTokenExpiration = new Date();

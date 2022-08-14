@@ -1,7 +1,7 @@
 import request from "supertest";
-import { app } from "../src/app";
-import { prisma } from "../src/database/prisma";
-import clearDatabase from "./setup";
+import { app } from "../../src/app";
+import { prisma } from "../../src/database/prisma";
+import clearDatabase from "../setup";
 
 // TODO: create test database
 

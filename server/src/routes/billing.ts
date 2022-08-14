@@ -1,5 +1,5 @@
-import { useContainer, validateOrReject } from "class-validator";
-import express, { Response, NextFunction, json } from "express";
+import { validateOrReject } from "class-validator";
+import express, { NextFunction, Response } from "express";
 import { HttpInvalidInputError, HttpUnauthorizedError } from "../errors";
 import { addPaymentMethod } from "../functions/billing/addPaymentMethod";
 import { getPaymentMethod } from "../functions/billing/getPaymentMethod";
@@ -37,7 +37,7 @@ class CreatePaymentMethodRequest {
   nickname?: string;
 }
 router.post(
-  "/create",
+  "/",
   requireLogin,
   async (request: Request, response: Response, next: NextFunction) => {
     if (!request.adminUser) {

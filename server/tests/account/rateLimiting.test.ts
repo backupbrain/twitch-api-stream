@@ -1,12 +1,12 @@
-import request from "supertest";
-import { app } from "../src/app";
 import { User } from "@prisma/client";
-import { prisma } from "../src/database/prisma";
-import { create } from "../src/functions/account/create";
-import clearDatabase from "./setup";
-import { verifyUser } from "../src/functions/account/verifyUser";
-import { AuthToken } from "../src/types";
-import { login } from "../src/functions/account/login";
+import request from "supertest";
+import { app } from "../../src/app";
+import { prisma } from "../../src/database/prisma";
+import { create } from "../../src/functions/account/create";
+import { login } from "../../src/functions/account/login";
+import { verifyUser } from "../../src/functions/account/verifyUser";
+import { AuthToken } from "../../src/types";
+import clearDatabase from "../setup";
 
 const username = "user@example.com";
 const password = "password";

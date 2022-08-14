@@ -1,4 +1,3 @@
-import canonicalize from "canonicalize";
 import cors from "cors";
 import express, { NextFunction, Response } from "express";
 import { HttpError, HttpInvalidInputError } from "./errors";
@@ -12,13 +11,11 @@ app.use(express.json());
 app.use("/", router);
 
 // Handle undefined routes
-app.use((request: Request, response: Response, next: NextFunction) => {
-  response.status(404).send(
-    canonicalize({
-      status: "error",
-      message: "resource_not_found",
-    })
-  );
+app.use((_request: Request, response: Response, next: NextFunction) => {
+  response.status(404).json({
+    status: "error",
+    message: "resource_not_found",
+  });
 });
 
 // error handling

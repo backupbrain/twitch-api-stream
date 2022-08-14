@@ -1,17 +1,20 @@
 import { User } from "@prisma/client";
 import request from "supertest";
-import { app } from "../src/app";
-import { prisma } from "../src/database/prisma";
-import { create } from "../src/functions/account/create";
-import { verifyUser } from "../src/functions/account/verifyUser";
-import { resetUsageStats } from "../src/functions/rateLimit/resetUsageStats";
-import { AuthToken } from "../src/types";
-import clearDatabase from "./setup";
+import { app } from "../../src/app";
+import { prisma } from "../../src/database/prisma";
+import { create } from "../../src/functions/account/create";
+import { verifyUser } from "../../src/functions/account/verifyUser";
+import { resetUsageStats } from "../../src/functions/rateLimit/resetUsageStats";
+import { AuthToken } from "../..lsrc/types";
+import clearDatabase from "../setup";
 
 const username = "user@example.com";
+const oldPassword = "oldPassword";
 const password = "password";
 let user: User;
 let authToken: AuthToken;
+let passwordResetToken1 = "";
+let passwordResetToken2 = "";
 
 const unconfirmedUsername = "unconfirmed@example.com";
 let unconfirmedUser: User;
@@ -19,7 +22,7 @@ let unconfirmedUser: User;
 const setup = async () => {
   user = await create({
     username,
-    password,
+    password: oldPassword,
   });
   await verifyUser({
     username,
@@ -27,7 +30,7 @@ const setup = async () => {
   });
   unconfirmedUser = await create({
     username: unconfirmedUsername,
-    password,
+    password: oldPassword,
   });
 };
 
@@ -36,52 +39,70 @@ beforeAll(async () => {
   await setup();
 });
 
-describe("Test login", () => {
-  test("Login fails bad credentials", async () => {
-    const endpoint = "/api/1.0/account/login";
+describe("Change password", () => {
+  test("Fails bad credentials", async () => {
+    const endpoint = "/api/1.0/account/password/reset";
     const data = {
-      username,
-      password: "badPassword",
+      username: "badusername@example.com",
     };
     const response = await request(app).post(endpoint).send(data);
-    expect(response.statusCode).toBe(401);
+    expect(response.statusCode).toBe(400);
     expect(response.body.status).toBe("error");
-    expect(response.body.message).toBe("Unauthorized");
+    expect(response.body.message).toBe("username_not_found");
   });
-  test("Login fails unconfirmed user", async () => {
-    const endpoint = "/api/1.0/account/login";
+  test("Token created with good credentials, unverified user", async () => {
+    const endpoint = "/api/1.0/account/password/reset";
     const data = {
       username: unconfirmedUsername,
-      password,
     };
     const response = await request(app).post(endpoint).send(data);
-    expect(response.statusCode).toBe(401);
-    expect(response.body.status).toBe("error");
-    expect(response.body.message).toBe("Unauthorized");
+    expect(response.statusCode).toBe(200);
+    expect(response.body.status).toBe("success");
+    expect(response.body.message).toBe("password_reset_token_created");
+    const user = await prisma.user.findFirst({
+      where: { username: unconfirmedUsername },
+    });
+    expect(user).not.toBe(null);
+    expect(typeof user?.resetPasswordToken).toBe("string");
+    expect(typeof user?.resetPasswordTokenExpiration).toBe("object");
+    const now = new Date();
+    expect(user?.resetPasswordTokenExpiration?.getTime()).toBeGreaterThan(
+      now.getTime()
+    );
+    passwordResetToken1 = user?.resetPasswordToken || "";
   });
-  test("Login with correct credentials", async () => {
-    const endpoint = "/api/1.0/account/login";
+  test("Token created with good credentials, verified user", async () => {
+    const endpoint = "/api/1.0/account/password/reset";
+    const data = {
+      username,
+    };
+    const response = await request(app).post(endpoint).send(data);
+    expect(response.statusCode).toBe(200);
+    expect(response.body.status).toBe("success");
+    expect(response.body.message).toBe("password_reset_token_created");
+    const user = await prisma.user.findFirst({
+      where: { username },
+    });
+    expect(user).not.toBe(null);
+    expect(typeof user?.resetPasswordToken).toBe("string");
+    expect(typeof user?.resetPasswordTokenExpiration).toBe("object");
+    const now = new Date();
+    expect(user?.resetPasswordTokenExpiration?.getTime()).toBeGreaterThan(
+      now.getTime()
+    );
+    passwordResetToken2 = user?.resetPasswordToken || "";
+  });
+  test("Reset fails with bad token", async () => {
+    const endpoint = "/api/1.0/account/password/reset/set";
     const data = {
       username,
       password,
+      token: "badToken",
     };
     const response = await request(app).post(endpoint).send(data);
     expect(response.statusCode).toBe(200);
-    const accessToken = await prisma.accessToken.findFirst({
-      where: { userId: user.id },
-    });
-    if (!accessToken) {
-      throw new Error("Auth token not created");
-    }
-    expect(response.statusCode).toBe(200);
-    expect(response.body.status).toBe("success");
+    expect(response.body.status).toBe("error");
     expect(response.body.message).toBe("user_logged_in");
-    expect(response.body.data.accessToken).toBe(accessToken.token);
-    expect(response.body.data.refreshToken).toBe(accessToken.token);
-    expect(response.body.data.expiresIn).toBeGreaterThan(0);
-    expect(response.body.data.tokenType).toBe("Bearer");
-    expect(response.body.data.scopes).toStrictEqual([]);
-    authToken = response.body.data;
   });
   test("Bad token cannot access restricted area with no authorization", async () => {
     const endpoint = "/api/1.0/account/refresh";
