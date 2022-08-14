@@ -14,6 +14,7 @@ describe("Test registration", () => {
   const password = "password";
   let verificationToken = "";
 
+  // TODO: test if user tries to create a subscription without a stripeToken
   test("User should be able to register", async () => {
     const endpoint = "/api/1.0/account/create";
     const data = {
