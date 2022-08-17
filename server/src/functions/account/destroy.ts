@@ -1,10 +1,7 @@
-import Stripe from "stripe";
 import { User } from "@prisma/client";
-import { HttpInvalidInputError } from "../../errors";
 import { prisma } from "../../database/prisma";
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2020-08-27",
-});
+import { HttpInvalidInputError } from "../../errors";
+import { stripe } from "../utils/stripe";
 
 export type Props = {
   user: User;

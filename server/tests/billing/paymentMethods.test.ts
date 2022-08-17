@@ -40,7 +40,7 @@ beforeAll(async () => {
 describe("Adding payment methods", () => {
   test("Add a non-primary billing method", async () => {
     const endpoint = "/api/1.0/account/billing";
-    const stripeToken = "token_12345";
+    const stripeToken = "pm_card_visa";
     const data = {
       stripeToken,
     };
@@ -67,7 +67,7 @@ describe("Adding payment methods", () => {
   });
   test("Add a primary billing method", async () => {
     const endpoint = "/api/1.0/account/billing";
-    const stripeToken = "token_23456";
+    const stripeToken = "pm_card_amex";
     const data = {
       stripeToken,
       primary: true,
@@ -95,7 +95,7 @@ describe("Adding payment methods", () => {
   });
   test("Add a payment method with nickname", async () => {
     const endpoint = "/api/1.0/account/billing";
-    const stripeToken = "token_34567";
+    const stripeToken = "pm_card_mastercard";
     const nickname = "billingnickname";
     const data = {
       stripeToken,

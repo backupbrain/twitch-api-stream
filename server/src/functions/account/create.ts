@@ -23,6 +23,14 @@ export const create = async ({
   stripePriceId,
   stripeToken,
 }: Props): Promise<User> => {
+  // check for matching user befor doing anything, so we can
+  // handle the stripe errors in the try/catch later
+  const existingUser = await prisma.user.findFirst({
+    where: { username },
+  });
+  if (existingUser) {
+    throw new HttpInvalidInputError("email_already_registered");
+  }
   const hashedPassword = hashPassword({ password });
   const verificationToken = createOneTimePassword({});
   let stripeSubscriptionId: string | null = null;
@@ -60,6 +68,7 @@ export const create = async ({
           user,
           stripeToken,
           primary: true,
+          prismaOverride: prisma,
         });
       }
       const now = new Date();
@@ -77,8 +86,8 @@ export const create = async ({
         },
       });
       return user;
-    } catch (error) {
-      throw new HttpInvalidInputError("Email already registerd");
+    } catch (error: any) {
+      throw new HttpInvalidInputError(error.message);
     }
   });
 };

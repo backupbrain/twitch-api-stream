@@ -1,19 +1,21 @@
-import { stripe } from "../utils/stripe";
-import { User, PaymentMethod } from "@prisma/client";
-import { HttpInvalidInputError } from "../../errors";
+import { PaymentMethod, Prisma, PrismaClient, User } from "@prisma/client";
 import { prisma } from "../../database/prisma";
+import { HttpInvalidInputError } from "../../errors";
+import { stripe } from "../utils/stripe";
 
 export type Props = {
   user: User;
   stripeToken: string;
   primary: boolean;
   nickname?: string;
+  prismaOverride?: Prisma.TransactionClient | PrismaClient;
 };
 export const addPaymentMethod = async ({
   user,
   stripeToken,
   primary,
   nickname,
+  prismaOverride,
 }: Props): Promise<PaymentMethod> => {
   try {
     const paymentMethod = await stripe.paymentMethods.create({
@@ -30,9 +32,12 @@ export const addPaymentMethod = async ({
         invoice_settings: { default_payment_method: paymentMethod.id },
       });
     }
-    const createdPaymentMethod = await prisma.paymentMethod.create({
+    let activePrisma: Prisma.TransactionClient | PrismaClient = prisma;
+    if (prismaOverride) {
+      activePrisma = prismaOverride;
+    }
+    const createdPaymentMethod = await activePrisma.paymentMethod.create({
       data: {
-        userId: user.id,
         stripePaymentMethodId: paymentMethod.id,
         nickname,
         last4: paymentMethod.card?.last4,
@@ -41,6 +46,9 @@ export const addPaymentMethod = async ({
         expirationMonth: paymentMethod.card?.exp_month,
         expirationYear: paymentMethod.card?.exp_year,
         isPrimary: primary,
+        user: {
+          connect: { id: user.id },
+        },
       },
     });
     return createdPaymentMethod;

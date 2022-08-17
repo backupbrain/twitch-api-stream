@@ -1,6 +1,7 @@
 import request from "supertest";
 import { app } from "../../src/app";
 import { prisma } from "../../src/database/prisma";
+import { priceIds } from "../../src/functions/billing/createSubscription";
 import clearDatabase from "../setup";
 
 // TODO: create test database
@@ -23,7 +24,6 @@ describe("Test registration", () => {
     };
     const response = await request(app).post(endpoint).send(data);
     expect(response.statusCode).toBe(200);
-    console.log({ body: response.body });
     expect(response.body.status).toBe("success");
     expect(response.body.message).toBe("user_created");
     // get the user's verification code
@@ -36,6 +36,53 @@ describe("Test registration", () => {
     verificationToken = user?.verificationToken || "";
     expect(verificationToken.length).toBe(6);
     expect(user?.isConfirmed).toBe(false);
+  });
+
+  test(
+    "User should be able to register with paid plan",
+    async () => {
+      const endpoint = "/api/1.0/account/create";
+      const stripeToken = "tok_visa";
+      const stripePriceId =
+        priceIds[Math.floor(Math.random() * priceIds.length)];
+      const data = {
+        username: "user1@example.com",
+        password,
+        stripeToken,
+        stripePriceId,
+      };
+      const response = await request(app).post(endpoint).send(data);
+      expect(response.statusCode).toBe(200);
+      expect(response.body.status).toBe("success");
+      expect(response.body.message).toBe("user_created");
+      // get the user's verification code
+      const user = await prisma.user.findFirst({
+        where: { username },
+      });
+      if (!user) {
+        throw Error("Could not find user");
+      }
+      verificationToken = user?.verificationToken || "";
+      expect(verificationToken.length).toBe(6);
+      expect(user?.isConfirmed).toBe(false);
+    },
+    10 * 1000
+  );
+
+  test("Error when confirming choosing a plan with no stripeToken", async () => {
+    const endpoint = "/api/1.0/account/create";
+    const stripePriceId = priceIds[Math.floor(Math.random() * priceIds.length)];
+    const data = {
+      username: "user2@example.com",
+      password,
+      stripePriceId,
+    };
+    const response = await request(app).post(endpoint).send(data);
+    expect(response.statusCode).toBe(400);
+    expect(response.body.status).toBe("error");
+    expect(response.body.message).toBe(
+      "stripeToken_required_if_stripePriceId_set"
+    );
   });
 
   test("Error when confirming bad code", async () => {
@@ -75,7 +122,7 @@ describe("Test registration", () => {
     const response = await request(app).post(endpoint).send(data);
     expect(response.statusCode).toBe(400);
     expect(response.body.status).toBe("error");
-    expect(response.body.message).toBe("Email already registerd");
+    expect(response.body.message).toBe("email_already_registered");
     expect(response.body.details).toMatchInlineSnapshot(`Array []`);
   });
 });
