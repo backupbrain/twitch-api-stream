@@ -40,7 +40,7 @@ beforeAll(async () => {
 describe("Adding payment methods", () => {
   test("Add a non-primary billing method", async () => {
     const endpoint = "/api/1.0/account/billing";
-    const stripeToken = "pm_card_visa";
+    const stripeToken = "tok_visa";
     const data = {
       stripeToken,
     };
@@ -53,7 +53,9 @@ describe("Adding payment methods", () => {
     expect(response.body.message).toBe("payment_method_created");
     const newPaymentMethodData = response.body.data;
     expect(typeof newPaymentMethodData.id).toBe("string");
-    expect(newPaymentMethodData.stripePaymentMethodId).toBe("");
+    expect(newPaymentMethodData.stripePaymentMethodId.substring(0, 3)).toBe(
+      "pm_"
+    );
     expect(newPaymentMethodData.nickname).toBe(null);
     expect(newPaymentMethodData.isPrimary).toBe(false);
     const paymentMethod = await prisma.paymentMethod.findFirst({
@@ -67,7 +69,7 @@ describe("Adding payment methods", () => {
   });
   test("Add a primary billing method", async () => {
     const endpoint = "/api/1.0/account/billing";
-    const stripeToken = "pm_card_amex";
+    const stripeToken = "tok_amex";
     const data = {
       stripeToken,
       primary: true,
@@ -81,7 +83,9 @@ describe("Adding payment methods", () => {
     expect(response.body.message).toBe("payment_method_created");
     const newPaymentMethodData = response.body.data;
     expect(typeof newPaymentMethodData.id).toBe("string");
-    expect(newPaymentMethodData.stripePaymentMethodId).toBe(stripeToken);
+    expect(newPaymentMethodData.stripePaymentMethodId.substring(0, 3)).toBe(
+      "pm_"
+    );
     expect(newPaymentMethodData.nickname).toBe(null);
     expect(newPaymentMethodData.isPrimary).toBe(true);
     const primaryPaymentMethods = await prisma.paymentMethod.findMany({
@@ -95,7 +99,7 @@ describe("Adding payment methods", () => {
   });
   test("Add a payment method with nickname", async () => {
     const endpoint = "/api/1.0/account/billing";
-    const stripeToken = "pm_card_mastercard";
+    const stripeToken = "tok_mastercard";
     const nickname = "billingnickname";
     const data = {
       stripeToken,
@@ -110,7 +114,9 @@ describe("Adding payment methods", () => {
     expect(response.body.message).toBe("payment_method_created");
     const newPaymentMethodData = response.body.data;
     expect(typeof newPaymentMethodData.id).toBe("string");
-    expect(newPaymentMethodData.stripePaymentMethodId).toBe(stripeToken);
+    expect(newPaymentMethodData.stripePaymentMethodId.substring(0, 3)).toBe(
+      "pm_"
+    );
     expect(newPaymentMethodData.nickname).toBe(nickname);
     expect(newPaymentMethodData.isPrimary).toBe(false);
     paymentMethod3 = newPaymentMethodData;
@@ -121,7 +127,7 @@ describe("Retrieving payment methods", () => {
     const allPaymentMethods = await prisma.paymentMethod.findMany({
       where: { userId: user.id },
     });
-    expect(allPaymentMethods.length).toBe(4);
+    expect(allPaymentMethods.length).toBe(3);
   });
   test("Fetch all payment methods", async () => {
     const endpoint = `/api/1.0/account/billing`;
@@ -179,7 +185,7 @@ describe("Modifying payment methods", () => {
     const paymentMethods = await prisma.paymentMethod.findMany({
       where: { userId: user.id },
     });
-    expect(paymentMethods.length).toBe(3);
+    expect(paymentMethods.length).toBe(2);
     let deletedPaymentMethodFound = false;
     for (let paymentMethod of paymentMethods) {
       if (paymentMethod.id === paymentMethod1.id) {
@@ -190,7 +196,7 @@ describe("Modifying payment methods", () => {
     expect(deletedPaymentMethodFound).toBe(false);
   });
   test("Update a payment method to primary", async () => {
-    const endpoint = `/api/1.0/account/billing/${paymentMethod1.id}`;
+    const endpoint = `/api/1.0/account/billing/${paymentMethod2.id}`;
     const nickname = "thenickname";
     const data = {
       primary: true,
@@ -205,7 +211,7 @@ describe("Modifying payment methods", () => {
     expect(response.body.message).toBe("payment_method_updated");
     const returnedPaymentMethod = response.body.data;
     const paymentMethod = await prisma.paymentMethod.findFirst({
-      where: { id: paymentMethod1.id, userId: user.id },
+      where: { id: paymentMethod2.id, userId: user.id },
     });
     expect(returnedPaymentMethod.id).toBe(paymentMethod?.id);
     expect(returnedPaymentMethod.isPrimary).toBe(true);
@@ -215,8 +221,8 @@ describe("Modifying payment methods", () => {
     });
     expect(primaryPaymentMethods.length).toBe(1);
   });
-  test("Update a payment method to non-primary", async () => {
-    const endpoint = `/api/1.0/account/billing/${paymentMethod1.id}`;
+  test("Update a non-primary payment method to non-primary", async () => {
+    const endpoint = `/api/1.0/account/billing/${paymentMethod3.id}`;
     const nickname = null;
     const data = {
       primary: false,
@@ -231,7 +237,33 @@ describe("Modifying payment methods", () => {
     expect(response.body.message).toBe("payment_method_updated");
     const returnedPaymentMethod = response.body.data;
     const paymentMethod = await prisma.paymentMethod.findFirst({
-      where: { id: paymentMethod1.id, userId: user.id },
+      where: { id: paymentMethod3.id, userId: user.id },
+    });
+    expect(returnedPaymentMethod.id).toBe(paymentMethod?.id);
+    expect(returnedPaymentMethod.isPrimary).toBe(false);
+    expect(returnedPaymentMethod.nickname).toBe(nickname);
+    const primaryPaymentMethods = await prisma.paymentMethod.findMany({
+      where: { userId: user.id, isPrimary: true },
+    });
+    expect(primaryPaymentMethods.length).toBe(1);
+  });
+  test("Update a payment method to non-primary", async () => {
+    const endpoint = `/api/1.0/account/billing/${paymentMethod2.id}`;
+    const nickname = null;
+    const data = {
+      primary: false,
+      nickname,
+    };
+    const response = await request(app)
+      .post(endpoint)
+      .set("Authorization", `${authToken.tokenType} ${authToken.accessToken}`)
+      .send(data);
+    expect(response.statusCode).toBe(200);
+    expect(response.body.status).toBe("success");
+    expect(response.body.message).toBe("payment_method_updated");
+    const returnedPaymentMethod = response.body.data;
+    const paymentMethod = await prisma.paymentMethod.findFirst({
+      where: { id: paymentMethod2.id, userId: user.id },
     });
     expect(returnedPaymentMethod.id).toBe(paymentMethod?.id);
     expect(returnedPaymentMethod.isPrimary).toBe(false);

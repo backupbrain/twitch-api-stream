@@ -1,7 +1,7 @@
-import { stripe } from "../utils/stripe";
 import { User } from "@prisma/client";
-import { HttpInvalidInputError, HttpNotFoundError } from "../../errors";
 import { prisma } from "../../database/prisma";
+import { HttpInvalidInputError, HttpNotFoundError } from "../../errors";
+import { stripe } from "../utils/stripe";
 
 export type Props = {
   user: User;
@@ -24,7 +24,9 @@ export const removePaymentMethod = async ({ user, id }: Props) => {
       },
     });
     if (deletedPaymentMethod) {
-      await stripe.paymentMethods.detach(deletedPaymentMethod.id);
+      await stripe.paymentMethods.detach(
+        deletedPaymentMethod.stripePaymentMethodId
+      );
     }
   } catch (error: any) {
     throw new HttpInvalidInputError(error.message);

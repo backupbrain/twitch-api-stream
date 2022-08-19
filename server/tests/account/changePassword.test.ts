@@ -35,7 +35,7 @@ const setup = async () => {
   });
   const response = await loginTestHelper({
     username,
-    password: newPassword,
+    password: oldPassword,
   });
   authToken = response.body.data;
 };
@@ -46,20 +46,24 @@ beforeAll(async () => {
 });
 
 describe("Change password", () => {
-  test("Fails bad old password", async () => {
-    const endpoint = "/api/1.0/account/password/change";
-    const data = {
-      oldPassword: "badoldpassword",
-      newPassword,
-    };
-    const response = await request(app)
-      .post(endpoint)
-      .set("Authorization", `${authToken.tokenType} ${authToken.accessToken}`)
-      .send(data);
-    expect(response.statusCode).toBe(400);
-    expect(response.body.status).toBe("error");
-    expect(response.body.message).toBe("field_oldpassword_incorrect");
-  });
+  test(
+    "Fails bad old password",
+    async () => {
+      const endpoint = "/api/1.0/account/password/change";
+      const data = {
+        oldPassword: "badoldpassword",
+        newPassword,
+      };
+      const response = await request(app)
+        .post(endpoint)
+        .set("Authorization", `${authToken.tokenType} ${authToken.accessToken}`)
+        .send(data);
+      expect(response.statusCode).toBe(400);
+      expect(response.body.status).toBe("error");
+      expect(response.body.message).toBe("field_oldpassword_incorrect");
+    },
+    10 * 1000
+  );
   test("Password changed", async () => {
     const endpoint = "/api/1.0/account/password/change";
     const data = {

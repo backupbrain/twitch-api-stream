@@ -182,6 +182,7 @@ class ChangePasswordRequest {
 }
 router.post(
   "/password/change",
+  requireLogin,
   async (request: Request, response: Response, next: NextFunction) => {
     const changePasswordRequest = new ChangePasswordRequest();
     changePasswordRequest.oldPassword = request.body.oldPassword;
@@ -196,11 +197,15 @@ router.post(
     }
     const oldPassword = changePasswordRequest.oldPassword;
     const newPassword = changePasswordRequest.newPassword;
-    await changePassword({
-      user: request.adminUser!,
-      oldPassword,
-      newPassword,
-    });
+    try {
+      await changePassword({
+        user: request.adminUser!,
+        oldPassword,
+        newPassword,
+      });
+    } catch (err) {
+      return next(err);
+    }
     response.json(successResponse({ message: "password_changed" }));
   }
 );

@@ -40,7 +40,7 @@ describe("Test account destroy", () => {
   test("Can destroy account", async () => {
     const endpoint = "/api/1.0/account/destroy";
     const response = await request(app)
-      .post(endpoint)
+      .delete(endpoint)
       .set("Authorization", `${authToken.tokenType} ${authToken.accessToken}`);
     expect(response.statusCode).toBe(200);
     expect(response.body.status).toBe("success");

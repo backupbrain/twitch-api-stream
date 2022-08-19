@@ -26,19 +26,18 @@ export const updatePaymentMethod = async ({
     throw new HttpNotFoundError("Payment method not found");
   }
   if (isPrimary) {
-    await setPaymentMethodPrimary({
+    const updatedPaymentMethod = await setPaymentMethodPrimary({
       user,
       id,
+      nickname,
     });
+    return updatedPaymentMethod;
   } else {
-    await unsetPaymentMethodPrimary({
+    const updatedPaymentMethod = await unsetPaymentMethodPrimary({
       user,
       id,
+      nickname,
     });
+    return updatedPaymentMethod;
   }
-  const updatedPaymentMethod = await prisma.paymentMethod.update({
-    where: { id },
-    data: { nickname, isPrimary },
-  });
-  return updatedPaymentMethod;
 };

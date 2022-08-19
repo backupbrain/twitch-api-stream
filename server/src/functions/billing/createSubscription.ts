@@ -1,6 +1,6 @@
-import { stripe } from "../utils/stripe";
 import Stripe from "stripe";
 import { HttpInvalidInputError } from "../../errors";
+import { stripe } from "../utils/stripe";
 
 export const priceIds = [
   "price_1LRYZFFXDDb4rrbhP47KpuoU", // Basic
