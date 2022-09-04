@@ -24,7 +24,7 @@ export const setPasswordForUsername = async ({
     },
   });
   if (!user) {
-    throw new HttpInvalidInputError("Invalid or expired token");
+    throw new HttpInvalidInputError("invalid_or_expired_token");
   }
   const hashedPassword = hashPassword({ password });
   const updatedUser = await prisma.user.update({

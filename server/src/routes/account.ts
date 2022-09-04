@@ -37,7 +37,6 @@ router.post(
     try {
       await validateOrReject(registrationRequest);
     } catch (errors) {
-      console.log({ errors });
       return next(new HttpInvalidInputError(errors));
     }
     const username = registrationRequest.username;
@@ -79,8 +78,6 @@ router.post(
     try {
       await validateOrReject(requestData);
     } catch (errors) {
-      console.log({ errors });
-      console.log(errors);
       return next(new HttpInvalidInputError(errors));
     }
     const username = requestData.username;
@@ -111,8 +108,6 @@ router.post(
     try {
       await validateOrReject(loginRequest);
     } catch (errors) {
-      console.log({ errors });
-      console.log(errors);
       next(new HttpInvalidInputError(errors));
       return;
     }
@@ -190,8 +185,6 @@ router.post(
     try {
       await validateOrReject(changePasswordRequest);
     } catch (errors) {
-      console.log({ errors });
-      console.log(errors);
       next(new HttpInvalidInputError(errors));
       return;
     }
@@ -222,24 +215,26 @@ router.post(
     try {
       await validateOrReject(passwordResetRequest);
     } catch (errors) {
-      console.log({ errors });
-      console.log(errors);
       next(new HttpInvalidInputError(errors));
       return;
     }
     const username = passwordResetRequest.username;
-    const user = await requestPasswordReset({
-      username,
-    });
-    // TODO send email
-    console.log(
-      `User ${username} requested password reset with verification code: ${user.resetPasswordToken}`
-    );
-    response.json(
-      successResponse({
-        message: "password_reset_token_created",
-      })
-    );
+    try {
+      const user = await requestPasswordReset({
+        username,
+      });
+      // TODO send email
+      console.log(
+        `User ${username} requested password reset with verification code: ${user.resetPasswordToken}`
+      );
+      response.json(
+        successResponse({
+          message: "password_reset_token_created",
+        })
+      );
+    } catch (error) {
+      return next(error);
+    }
   }
 );
 
@@ -259,20 +254,22 @@ router.post(
     try {
       await validateOrReject(passwordChangeRequest);
     } catch (errors) {
-      console.log({ errors });
-      console.log(errors);
       next(new HttpInvalidInputError(errors));
       return;
     }
     const username = passwordChangeRequest.username;
     const password = passwordChangeRequest.password;
     const resetPasswordToken = passwordChangeRequest.token;
-    await setPasswordForUsername({
-      username,
-      password,
-      resetPasswordToken,
-    });
-    response.json(successResponse({ message: "password_changed" }));
+    try {
+      await setPasswordForUsername({
+        username,
+        password,
+        resetPasswordToken,
+      });
+      response.json(successResponse({ message: "password_changed" }));
+    } catch (error) {
+      return next(error);
+    }
   }
 );
 

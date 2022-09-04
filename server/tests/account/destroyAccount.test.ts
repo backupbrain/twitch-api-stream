@@ -1,6 +1,7 @@
 import { User } from "@prisma/client";
 import request from "supertest";
 import { app } from "../../src/app";
+import { prisma } from "../../src/database/prisma";
 import { create } from "../../src/functions/account/create";
 import { verifyUser } from "../../src/functions/account/verifyUser";
 import { AuthToken } from "../../src/types";
@@ -45,5 +46,9 @@ describe("Test account destroy", () => {
     expect(response.statusCode).toBe(200);
     expect(response.body.status).toBe("success");
     expect(response.body.message).toBe("user_removed");
+    const user = await prisma.user.findFirst({
+      where: { username },
+    });
+    expect(user).toBe(null);
   });
 });

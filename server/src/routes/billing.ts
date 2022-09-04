@@ -27,7 +27,7 @@ router.get(
 );
 
 class UpdateSubscriptionPlanRequest {
-  id!: string;
+  id!: string | null;
 }
 router.post(
   "/subscription",
@@ -41,7 +41,6 @@ router.post(
     try {
       await validateOrReject(updateSubscriptionPlanRequest);
     } catch (errors) {
-      console.log({ errors });
       return next(new HttpInvalidInputError(errors));
     }
     const stripePriceId = updateSubscriptionPlanRequest.id;
@@ -53,7 +52,6 @@ router.post(
       const updatedUser = await prisma.user.findUnique({
         where: { id: request.adminUser.id },
       });
-      console.log({ updatedUser });
       // TODO: remove stripePaymentMethod information
       return response.json(
         successResponse({
@@ -105,7 +103,6 @@ router.post(
     try {
       await validateOrReject(createPaymentMethodRequest);
     } catch (errors) {
-      console.log({ errors });
       return next(new HttpInvalidInputError(errors));
     }
     const stripeToken = createPaymentMethodRequest.stripeToken;
@@ -169,7 +166,6 @@ router.post(
     try {
       await validateOrReject(updatePaymentMethodRequest);
     } catch (errors) {
-      console.log({ errors });
       return next(new HttpInvalidInputError(errors));
     }
     const isPrimary = updatePaymentMethodRequest.primary;

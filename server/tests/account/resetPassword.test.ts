@@ -5,7 +5,8 @@ import { prisma } from "../../src/database/prisma";
 import { create } from "../../src/functions/account/create";
 import { verifyUser } from "../../src/functions/account/verifyUser";
 import { resetUsageStats } from "../../src/functions/rateLimit/resetUsageStats";
-import { AuthToken } from "../..lsrc/types";
+import { AuthToken } from "../../src/types";
+import { loginTestHelper } from "../helpers/loginTestHelper";
 import clearDatabase from "../setup";
 
 const username = "user@example.com";
@@ -40,6 +41,7 @@ beforeAll(async () => {
 });
 
 describe("Change password", () => {
+  let authToken: AuthToken | undefined = undefined;
   test("Fails bad credentials", async () => {
     const endpoint = "/api/1.0/account/password/reset";
     const data = {
@@ -100,9 +102,21 @@ describe("Change password", () => {
       token: "badToken",
     };
     const response = await request(app).post(endpoint).send(data);
-    expect(response.statusCode).toBe(200);
+    expect(response.statusCode).toBe(400);
     expect(response.body.status).toBe("error");
-    expect(response.body.message).toBe("user_logged_in");
+    expect(response.body.message).toBe("invalid_or_expired_token");
+  });
+  test("Reset succeeds with good token", async () => {
+    const endpoint = "/api/1.0/account/password/reset/set";
+    const data = {
+      username,
+      password,
+      token: passwordResetToken2,
+    };
+    const response = await request(app).post(endpoint).send(data);
+    expect(response.statusCode).toBe(200);
+    expect(response.body.status).toBe("success");
+    expect(response.body.message).toBe("password_changed");
   });
   test("Bad token cannot access restricted area with no authorization", async () => {
     const endpoint = "/api/1.0/account/refresh";
@@ -112,10 +126,12 @@ describe("Change password", () => {
     expect(response.body.message).toBe("No auth token provided");
   });
   test("Bad token cannot access restricted area with bad authorization", async () => {
+    const loginResponse = await loginTestHelper({ username, password });
+    authToken = loginResponse.body.data;
     const endpoint = "/api/1.0/account/refresh";
     const response = await request(app)
       .post(endpoint)
-      .set("Authorization", `${authToken.tokenType} abc123`);
+      .set("Authorization", `${authToken?.tokenType} abc123`);
     expect(response.statusCode).toBe(403);
     expect(response.body.status).toBe("error");
     expect(response.body.message).toBe("Unauthorized");
@@ -125,7 +141,10 @@ describe("Change password", () => {
     const endpoint = "/api/1.0/account/refresh";
     const response = await request(app)
       .post(endpoint)
-      .set("Authorization", `${authToken.tokenType} ${authToken.accessToken}`);
+      .set(
+        "Authorization",
+        `${authToken?.tokenType} ${authToken?.accessToken}`
+      );
     const accessToken = await prisma.accessToken.findFirst({
       where: { userId: user.id },
     });
@@ -147,7 +166,10 @@ describe("Change password", () => {
     const endpoint = "/api/1.0/account/logout";
     const response = await request(app)
       .post(endpoint)
-      .set("Authorization", `${authToken.tokenType} ${authToken.accessToken}`);
+      .set(
+        "Authorization",
+        `${authToken?.tokenType} ${authToken?.accessToken}`
+      );
     expect(response.body.status).toBe("success");
     expect(response.body.message).toBe("user_logged_out");
     expect(response.statusCode).toBe(200);
@@ -165,7 +187,10 @@ describe("Change password", () => {
     const endpoint = "/api/1.0/account/refresh";
     const response = await request(app)
       .post(endpoint)
-      .set("Authorization", `${authToken.tokenType} ${authToken.accessToken}`);
+      .set(
+        "Authorization",
+        `${authToken?.tokenType} ${authToken?.accessToken}`
+      );
     expect(response.statusCode).toBe(403);
     expect(response.body.status).toBe("error");
     expect(response.body.message).toBe("Unauthorized");
