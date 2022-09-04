@@ -1,12 +1,12 @@
-import { createOneTimePassword } from "../utils/createOneTimePassword";
+import { User } from "@prisma/client";
 import { prisma } from "../../database/prisma";
 import { HttpInvalidInputError } from "../../errors";
-import { User } from "@prisma/client";
-import { hashPassword } from "../utils/hashPassword";
-import { getFutureDateByMonths } from "../utils/getFutureDateByMonths";
+import { addPaymentMethod } from "../billing/addPaymentMethod";
 import { createStripeCustomer } from "../billing/createStripeCustomer";
 import { createSubscription } from "../billing/createSubscription";
-import { addPaymentMethod } from "../billing/addPaymentMethod";
+import { createOneTimePassword } from "../utils/createOneTimePassword";
+import { getFutureDateByMonths } from "../utils/getFutureDateByMonths";
+import { hashPassword } from "../utils/hashPassword";
 
 const defaultNumApiCallsAllowedInPeriod = 1000;
 
@@ -23,12 +23,25 @@ export const create = async ({
   stripePriceId,
   stripeToken,
 }: Props): Promise<User> => {
+  // check for matching user befor doing anything, so we can
+  // handle the stripe errors in the try/catch later
+  const existingUser = await prisma.user.findFirst({
+    where: { username },
+  });
+  if (existingUser) {
+    throw new HttpInvalidInputError("email_already_registered");
+  }
   const hashedPassword = hashPassword({ password });
   const verificationToken = createOneTimePassword({});
   let stripeSubscriptionId: string | null = null;
   const stripeCustomer = await createStripeCustomer({
     email: username,
   });
+  if (stripePriceId && !stripeToken) {
+    throw new HttpInvalidInputError(
+      "stripeToken_required_if_stripePriceId_set"
+    );
+  }
   if (stripePriceId) {
     // TODO: store payment method
     const stripeSubscription = await createSubscription({
@@ -55,6 +68,7 @@ export const create = async ({
           user,
           stripeToken,
           primary: true,
+          prismaOverride: prisma,
         });
       }
       const now = new Date();
@@ -72,8 +86,8 @@ export const create = async ({
         },
       });
       return user;
-    } catch (error) {
-      throw new HttpInvalidInputError("Email already registerd");
+    } catch (error: any) {
+      throw new HttpInvalidInputError(error.message);
     }
   });
 };

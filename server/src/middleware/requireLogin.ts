@@ -1,8 +1,8 @@
+import { NextFunction, Response } from "express";
 import { prisma } from "../database/prisma";
-import { Response, NextFunction } from "express";
-import { Request } from "../types";
 import { HttpForbiddenError, HttpTooManyRequestsError } from "../errors";
 import { incrementUsageStats } from "../functions/rateLimit/incrementUsageStats";
+import { Request } from "../types";
 
 /**
  * Verify that there are certain headers in the request

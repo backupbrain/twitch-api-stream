@@ -1,5 +1,6 @@
-import { useContainer, validateOrReject } from "class-validator";
-import express, { Response, NextFunction, json } from "express";
+import { validateOrReject } from "class-validator";
+import express, { NextFunction, Response } from "express";
+import { prisma } from "../database/prisma";
 import { HttpInvalidInputError, HttpUnauthorizedError } from "../errors";
 import { addPaymentMethod } from "../functions/billing/addPaymentMethod";
 import { getPaymentMethod } from "../functions/billing/getPaymentMethod";
@@ -13,6 +14,58 @@ import { successResponse } from "./responses";
 export const router = express.Router();
 
 router.get(
+  "/subscription",
+  requireLogin,
+  async (request: Request, response: Response, next: NextFunction) => {
+    if (!request.adminUser) {
+      return next(new HttpUnauthorizedError("Unauthorized"));
+    }
+    return response.json(
+      successResponse({ data: { id: request.adminUser.stripePriceId } })
+    );
+  }
+);
+
+class UpdateSubscriptionPlanRequest {
+  id!: string | null;
+}
+router.post(
+  "/subscription",
+  requireLogin,
+  async (request: Request, response: Response, next: NextFunction) => {
+    if (!request.adminUser) {
+      return next(new HttpUnauthorizedError("Unauthorized"));
+    }
+    const updateSubscriptionPlanRequest = new UpdateSubscriptionPlanRequest();
+    updateSubscriptionPlanRequest.id = request.body.id;
+    try {
+      await validateOrReject(updateSubscriptionPlanRequest);
+    } catch (errors) {
+      return next(new HttpInvalidInputError(errors));
+    }
+    const stripePriceId = updateSubscriptionPlanRequest.id;
+    try {
+      await switchSubscriptionPlan({
+        user: request.adminUser,
+        stripePriceId,
+      });
+      const updatedUser = await prisma.user.findUnique({
+        where: { id: request.adminUser.id },
+      });
+      // TODO: remove stripePaymentMethod information
+      return response.json(
+        successResponse({
+          message: "subscription_changed",
+          data: { id: updatedUser?.stripePriceId },
+        })
+      );
+    } catch (error: unknown) {
+      return next(error);
+    }
+  }
+);
+
+router.get(
   "/",
   requireLogin,
   async (request: Request, response: Response, next: NextFunction) => {
@@ -24,7 +77,7 @@ router.get(
         user: request.adminUser,
       });
       // TODO: remove stripePaymentMethod information
-      return response.send(successResponse({ data: paymentMethods }));
+      return response.json(successResponse({ data: paymentMethods }));
     } catch (error: unknown) {
       return next(error);
     }
@@ -37,7 +90,7 @@ class CreatePaymentMethodRequest {
   nickname?: string;
 }
 router.post(
-  "/create",
+  "/",
   requireLogin,
   async (request: Request, response: Response, next: NextFunction) => {
     if (!request.adminUser) {
@@ -50,7 +103,6 @@ router.post(
     try {
       await validateOrReject(createPaymentMethodRequest);
     } catch (errors) {
-      console.log({ errors });
       return next(new HttpInvalidInputError(errors));
     }
     const stripeToken = createPaymentMethodRequest.stripeToken;
@@ -63,7 +115,7 @@ router.post(
         primary,
         nickname,
       });
-      return response.send(
+      return response.json(
         successResponse({
           message: "payment_method_created",
           data: paymentMethod,
@@ -89,7 +141,7 @@ router.get(
         id,
       });
       // TODO: remove stripe informtion
-      return response.send(successResponse({ data: paymentMethod }));
+      return response.json(successResponse({ data: paymentMethod }));
     } catch (error: unknown) {
       return next(error);
     }
@@ -114,7 +166,6 @@ router.post(
     try {
       await validateOrReject(updatePaymentMethodRequest);
     } catch (errors) {
-      console.log({ errors });
       return next(new HttpInvalidInputError(errors));
     }
     const isPrimary = updatePaymentMethodRequest.primary;
@@ -127,7 +178,7 @@ router.post(
         nickname,
       });
       // TODO: remove stripe informtion
-      return response.send(
+      return response.json(
         successResponse({
           message: "payment_method_updated",
           data: paymentMethod,
@@ -152,55 +203,8 @@ router.delete(
         user: request.adminUser,
         id,
       });
-      return response.send(
+      return response.json(
         successResponse({ message: "payment_method_deleted" })
-      );
-    } catch (error: unknown) {
-      return next(error);
-    }
-  }
-);
-
-router.get(
-  "/subscription",
-  requireLogin,
-  async (request: Request, response: Response, next: NextFunction) => {
-    if (!request.adminUser) {
-      return next(new HttpUnauthorizedError("Unauthorized"));
-    }
-    return response.send(
-      successResponse({ data: { id: request.adminUser.stripePriceId } })
-    );
-  }
-);
-
-class UpdateSubscriptionPlanRequest {
-  id!: string;
-}
-router.post(
-  "/subscription",
-  requireLogin,
-  async (request: Request, response: Response, next: NextFunction) => {
-    if (!request.adminUser) {
-      return next(new HttpUnauthorizedError("Unauthorized"));
-    }
-    const updateSubscriptionPlanRequest = new UpdateSubscriptionPlanRequest();
-    updateSubscriptionPlanRequest.id = request.body.id;
-    try {
-      await validateOrReject(updateSubscriptionPlanRequest);
-    } catch (errors) {
-      console.log({ errors });
-      return next(new HttpInvalidInputError(errors));
-    }
-    const stripePriceId = updateSubscriptionPlanRequest.id;
-    try {
-      const subscription = await switchSubscriptionPlan({
-        user: request.adminUser,
-        stripePriceId,
-      });
-      // TODO: remove stripePaymentMethod information
-      return response.send(
-        successResponse({ message: "subscription_changed", data: subscription })
       );
     } catch (error: unknown) {
       return next(error);

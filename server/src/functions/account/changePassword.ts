@@ -19,7 +19,7 @@ export const changePassword = async ({
     hashedPassword: user.hashedPassword,
   });
   if (!isOldPasswordCorrect) {
-    throw new HttpInvalidInputError("oldPassword is incorrect");
+    throw new HttpInvalidInputError("field_oldpassword_incorrect");
   }
   const hashedPassword = hashPassword({ password: newPassword });
   const updatedUser = await prisma.user.update({

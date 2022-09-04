@@ -1,19 +1,20 @@
-import express, { Response, NextFunction } from "express";
-export const router = express.Router();
-import { Request } from "../types";
-import { login } from "../functions/account/login";
-import { requireLogin } from "../middleware/requireLogin";
-import { refreshAuthToken } from "../functions/account/refreshAuthToken";
 import { IsEmail, validateOrReject } from "class-validator";
-import { HttpInvalidInputError, HttpUnauthorizedError } from "../errors";
-import { logout } from "../functions/account/logout";
-import { create } from "../functions/account/create";
-import { verifyUser } from "../functions/account/verifyUser";
-import { getUsageStats } from "../functions/rateLimit/getUsageStats";
+import express, { NextFunction, Response } from "express";
+import { HttpInvalidInputError } from "../errors";
 import { changePassword } from "../functions/account/changePassword";
+import { create } from "../functions/account/create";
+import { destroyAccount } from "../functions/account/destroy";
+import { login } from "../functions/account/login";
+import { logout } from "../functions/account/logout";
+import { refreshAuthToken } from "../functions/account/refreshAuthToken";
 import { requestPasswordReset } from "../functions/account/requestPasswordReset";
 import { setPasswordForUsername } from "../functions/account/setPasswordForUsername";
+import { verifyUser } from "../functions/account/verifyUser";
+import { getUsageStats } from "../functions/rateLimit/getUsageStats";
+import { requireLogin } from "../middleware/requireLogin";
+import { Request } from "../types";
 import { successResponse } from "./responses";
+export const router = express.Router();
 
 /**
  * Register
@@ -36,7 +37,6 @@ router.post(
     try {
       await validateOrReject(registrationRequest);
     } catch (errors) {
-      console.log({ errors });
       return next(new HttpInvalidInputError(errors));
     }
     const username = registrationRequest.username;
@@ -54,7 +54,7 @@ router.post(
       console.log(
         `User ${username} created with verification code: ${user.verificationToken}`
       );
-      return response.send(successResponse({ message: "user_created" }));
+      return response.json(successResponse({ message: "user_created" }));
     } catch (error: unknown) {
       return next(error);
     }
@@ -78,15 +78,13 @@ router.post(
     try {
       await validateOrReject(requestData);
     } catch (errors) {
-      console.log({ errors });
-      console.log(errors);
       return next(new HttpInvalidInputError(errors));
     }
     const username = requestData.username;
     const verificationToken = requestData.verificationToken;
     try {
       await verifyUser({ username, verificationToken });
-      return response.send(successResponse({ message: "user_verified" }));
+      return response.json(successResponse({ message: "user_verified" }));
     } catch (error: unknown) {
       return next(error);
     }
@@ -110,8 +108,6 @@ router.post(
     try {
       await validateOrReject(loginRequest);
     } catch (errors) {
-      console.log({ errors });
-      console.log(errors);
       next(new HttpInvalidInputError(errors));
       return;
     }
@@ -119,7 +115,7 @@ router.post(
     const password = loginRequest.password;
     try {
       const tokenData = await login({ username, password });
-      return response.send(
+      return response.json(
         successResponse({
           message: "user_logged_in",
           data: tokenData,
@@ -141,7 +137,7 @@ router.post(
   async (request: Request, response: Response, next: NextFunction) => {
     const accessToken = request.accessToken!.token;
     const updatedToken = await refreshAuthToken({ accessToken });
-    response.send(
+    response.json(
       successResponse({
         message: "login_token_refreshed",
         data: updatedToken,
@@ -161,7 +157,7 @@ router.post(
     const accessToken = request.accessToken!.token;
     try {
       const updatedAuthToken = await logout({ accessToken });
-      response.send(
+      response.json(
         successResponse({
           message: "user_logged_out",
           data: updatedAuthToken,
@@ -181,6 +177,7 @@ class ChangePasswordRequest {
 }
 router.post(
   "/password/change",
+  requireLogin,
   async (request: Request, response: Response, next: NextFunction) => {
     const changePasswordRequest = new ChangePasswordRequest();
     changePasswordRequest.oldPassword = request.body.oldPassword;
@@ -188,19 +185,21 @@ router.post(
     try {
       await validateOrReject(changePasswordRequest);
     } catch (errors) {
-      console.log({ errors });
-      console.log(errors);
       next(new HttpInvalidInputError(errors));
       return;
     }
     const oldPassword = changePasswordRequest.oldPassword;
     const newPassword = changePasswordRequest.newPassword;
-    await changePassword({
-      user: request.adminUser!,
-      oldPassword,
-      newPassword,
-    });
-    response.send(successResponse({ message: "password_changed" }));
+    try {
+      await changePassword({
+        user: request.adminUser!,
+        oldPassword,
+        newPassword,
+      });
+    } catch (err) {
+      return next(err);
+    }
+    response.json(successResponse({ message: "password_changed" }));
   }
 );
 
@@ -216,24 +215,26 @@ router.post(
     try {
       await validateOrReject(passwordResetRequest);
     } catch (errors) {
-      console.log({ errors });
-      console.log(errors);
       next(new HttpInvalidInputError(errors));
       return;
     }
     const username = passwordResetRequest.username;
-    const user = await requestPasswordReset({
-      username,
-    });
-    // TODO send email
-    console.log(
-      `User ${username} requested password reset with verification code: ${user.resetPasswordToken}`
-    );
-    response.send(
-      successResponse({
-        message: "password_reset_token_created",
-      })
-    );
+    try {
+      const user = await requestPasswordReset({
+        username,
+      });
+      // TODO send email
+      console.log(
+        `User ${username} requested password reset with verification code: ${user.resetPasswordToken}`
+      );
+      response.json(
+        successResponse({
+          message: "password_reset_token_created",
+        })
+      );
+    } catch (error) {
+      return next(error);
+    }
   }
 );
 
@@ -253,20 +254,22 @@ router.post(
     try {
       await validateOrReject(passwordChangeRequest);
     } catch (errors) {
-      console.log({ errors });
-      console.log(errors);
       next(new HttpInvalidInputError(errors));
       return;
     }
     const username = passwordChangeRequest.username;
     const password = passwordChangeRequest.password;
     const resetPasswordToken = passwordChangeRequest.token;
-    await setPasswordForUsername({
-      username,
-      password,
-      resetPasswordToken,
-    });
-    response.send(successResponse({ message: "password_changed" }));
+    try {
+      await setPasswordForUsername({
+        username,
+        password,
+        resetPasswordToken,
+      });
+      response.json(successResponse({ message: "password_changed" }));
+    } catch (error) {
+      return next(error);
+    }
   }
 );
 
@@ -278,7 +281,20 @@ router.get(
       const { userId, ...stats } = await getUsageStats({
         user: request.adminUser!,
       });
-      response.send(successResponse({ data: stats }));
+      response.json(successResponse({ data: stats }));
+    } catch (err) {
+      return next(err);
+    }
+  }
+);
+
+router.delete(
+  "/destroy",
+  requireLogin,
+  async (request: Request, response: Response, next: NextFunction) => {
+    try {
+      await destroyAccount({ user: request.adminUser! });
+      response.json(successResponse({ message: "user_removed" }));
     } catch (err) {
       return next(err);
     }
