@@ -24,7 +24,7 @@ class RegistrationRequest {
   username!: string;
   password!: string;
   stripeToken?: string;
-  stripePriceId?: string;
+  subscriptionId?: string;
 }
 router.post(
   "/create",
@@ -33,7 +33,7 @@ router.post(
     registrationRequest.username = request.body.username;
     registrationRequest.password = request.body.password;
     registrationRequest.stripeToken = request.body.stripeToken;
-    registrationRequest.stripePriceId = request.body.stripePriceId;
+    registrationRequest.subscriptionId = request.body.subscriptionId;
     try {
       await validateOrReject(registrationRequest);
     } catch (errors) {
@@ -42,13 +42,13 @@ router.post(
     const username = registrationRequest.username;
     const password = registrationRequest.password;
     const stripeToken = registrationRequest.stripeToken;
-    const stripePriceId = registrationRequest.stripePriceId;
+    const subscriptionId = registrationRequest.subscriptionId;
     try {
       const user = await create({
         username,
         password,
         stripeToken,
-        stripePriceId,
+        subscriptionId,
       });
       // TODO send email
       console.log(

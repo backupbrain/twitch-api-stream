@@ -11,7 +11,7 @@ const username = "user@example.com";
 const password = "password";
 let user: User;
 let authToken: AuthToken;
-const newStripePriceId = "price_1LRYhoFXDDb4rrbhYbcSMtsM";
+const newSubscriptionId = "95642f7a-d172-446f-a408-ebf310242a94";
 
 const setup = async () => {
   user = await create({
@@ -43,12 +43,12 @@ describe("Switching subscription plans", () => {
     expect(response.statusCode).toBe(200);
     expect(response.body.status).toBe("success");
     const subscription = response.body.data;
-    expect(subscription.id).toBe(user.stripePriceId);
+    expect(subscription.id).toBe(null);
   });
   test("Switching subscription plans", async () => {
     const endpoint = "/api/1.0/account/billing/subscription";
     const data = {
-      id: newStripePriceId,
+      id: newSubscriptionId,
     };
     const response = await request(app)
       .post(endpoint)
@@ -58,7 +58,7 @@ describe("Switching subscription plans", () => {
     expect(response.body.status).toBe("success");
     expect(response.body.message).toBe("subscription_changed");
     const newSubscriptionData = response.body.data;
-    expect(newSubscriptionData.id).toBe(newStripePriceId);
+    expect(newSubscriptionData.id).toBe(newSubscriptionId);
   });
   test("Verifying the current plan changed", async () => {
     const endpoint = "/api/1.0/account/billing/subscription";
@@ -68,7 +68,7 @@ describe("Switching subscription plans", () => {
     expect(response.statusCode).toBe(200);
     expect(response.body.status).toBe("success");
     const subscription = response.body.data;
-    expect(subscription.id).toBe(newStripePriceId);
+    expect(subscription.id).toBe(newSubscriptionId);
   });
   test("Cannot swiwch to invalid plan", async () => {
     const endpoint = "/api/1.0/account/billing/subscription";
@@ -81,7 +81,7 @@ describe("Switching subscription plans", () => {
       .send(data);
     expect(response.statusCode).toBe(400);
     expect(response.body.status).toBe("error");
-    expect(response.body.message).toBe("invalid_stripePriceId");
+    expect(response.body.message).toBe("invalid_subscriptionId");
   });
   test("Verifying the plan didn't change", async () => {
     const endpoint = "/api/1.0/account/billing/subscription";
@@ -91,7 +91,7 @@ describe("Switching subscription plans", () => {
     expect(response.statusCode).toBe(200);
     expect(response.body.status).toBe("success");
     const subscription = response.body.data;
-    expect(subscription.id).toBe(newStripePriceId);
+    expect(subscription.id).toBe(newSubscriptionId);
   });
   test("Switch to free plan", async () => {
     const endpoint = "/api/1.0/account/billing/subscription";
@@ -104,7 +104,7 @@ describe("Switching subscription plans", () => {
       .send(data);
     // expect(response.statusCode).toBe(200);
     // expect(response.body.status).toBe("success");
-    // expect(response.body.message).toBe("invalid_stripePriceId");
+    // expect(response.body.message).toBe("invalid_subscriptionId");
     const newSubscriptionData = response.body.data;
     expect(newSubscriptionData.id).toBe(null);
   });
