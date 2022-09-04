@@ -3,64 +3,74 @@ import Stripe from "stripe";
 import { prisma } from "../../database/prisma";
 import { HttpInvalidInputError } from "../../errors";
 import { stripe } from "../utils/stripe";
-import { createSubscription, priceIds } from "./createSubscription";
+import {
+  createSubscription,
+  Result as CreateSubscriptionResult,
+} from "./createSubscription";
 
 export type StripeSubscriptionProps = {
   user: User;
-  stripePriceId?: string | null;
+  subscriptionId?: string | null;
 };
 export const retrieveOrCreateStripeSubscription = async ({
   user,
-  stripePriceId,
-}: StripeSubscriptionProps): Promise<Stripe.Subscription | undefined> => {
+  subscriptionId,
+}: StripeSubscriptionProps): Promise<CreateSubscriptionResult | undefined> => {
   if (!user.stripeSubscriptionId) {
-    if (stripePriceId) {
-      const subscription = await createSubscription({
+    if (subscriptionId) {
+      const subscriptionData = await createSubscription({
         stripeCustomerId: user.stripeCustomerId,
-        stripePriceId,
+        subscriptionId,
       });
-      return subscription;
+      return subscriptionData;
     } else {
       return undefined;
     }
   } else {
-    const subscription = await stripe.subscriptions.retrieve(
+    const stripeSubscription = await stripe.subscriptions.retrieve(
       user.stripeSubscriptionId
     );
-    return subscription;
+    return { subscription: undefined, stripeSubscription };
   }
 };
 
 export type Props = {
   user: User;
-  stripePriceId: string | null;
+  subscriptionId: string | null;
 };
 export const switchSubscriptionPlan = async ({
   user,
-  stripePriceId,
+  subscriptionId,
 }: Props): Promise<Stripe.Subscription | null> => {
   try {
-    if (stripePriceId) {
+    if (subscriptionId) {
       // paid plan
-      if (!priceIds.includes(stripePriceId)) {
-        throw new HttpInvalidInputError("invalid_stripePriceId");
+      // TODO: match this plan against testing/live mode
+      const subscription = await prisma.subscription.findFirst({
+        where: { id: subscriptionId, active: true },
+      });
+      if (!subscription) {
+        throw new HttpInvalidInputError("invalid_subscriptionId");
       }
-      let stripeSubscription: Stripe.Subscription | undefined = undefined;
+      let subscriptionData: CreateSubscriptionResult | undefined = undefined;
       try {
-        stripeSubscription = await retrieveOrCreateStripeSubscription({
+        subscriptionData = await retrieveOrCreateStripeSubscription({
           user,
-          stripePriceId,
+          subscriptionId,
         });
       } catch (error: any) {
         throw new HttpInvalidInputError(error.message);
       }
-      if (!stripeSubscription) {
+      if (!subscriptionData?.stripeSubscription) {
         throw new HttpInvalidInputError("cannot_retrive_stripe_subscription");
+      }
+      if (!subscriptionData?.subscription) {
+        throw new HttpInvalidInputError("cannot_retrive_subscription");
       }
       let didFindExistingPriceId = false;
       const stripeSubscriptionItems: { [key: string]: any }[] = [];
-      stripeSubscription.items.data.forEach((data) => {
-        if (data.price.id === stripePriceId) {
+      subscriptionData?.stripeSubscription.items.data.forEach((data) => {
+        if (data.price.id === subscription.stripePriceId) {
           didFindExistingPriceId = true;
           stripeSubscriptionItems.push({
             id: data.id,
@@ -75,56 +85,42 @@ export const switchSubscriptionPlan = async ({
       });
       if (!didFindExistingPriceId) {
         await stripe.subscriptionItems.create({
-          subscription: stripeSubscription.id!,
-          price: stripePriceId,
+          subscription: subscriptionData?.stripeSubscription.id!,
+          price: subscription.stripePriceId,
           quantity: 1,
         });
       }
       const updatedSubscription = await stripe.subscriptions.update(
-        stripeSubscription.id!,
+        subscriptionData?.stripeSubscription.id!,
         {
           items: stripeSubscriptionItems,
         }
       );
       await prisma.user.update({
         where: { id: user.id },
-        data: { stripePriceId, stripeSubscriptionId: updatedSubscription.id },
+        data: {
+          subscriptionId: subscriptionData.subscription.id,
+          stripeSubscriptionId: updatedSubscription.id,
+        },
       });
       return updatedSubscription;
     } else {
       // free plan
       const stripeSubscription = await retrieveOrCreateStripeSubscription({
         user,
-        stripePriceId,
+        subscriptionId,
       });
       if (stripeSubscription) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { stripePriceId, stripeSubscriptionId: stripeSubscription.id },
-        });
-        // turn off subscription
-        const stripeSubscriptionItems: { [key: string]: any }[] = [];
-        stripeSubscription.items.data.forEach((data) => {
-          if (data.price.id !== stripePriceId) {
-            stripeSubscriptionItems.push({
-              id: data.id,
-              deleted: true,
-            });
-          }
-        });
-        const res = await stripe.subscriptions.cancel(stripeSubscription.id);
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { stripePriceId, stripeSubscriptionId: null },
-        });
-        return null;
-      } else {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { stripePriceId, stripeSubscriptionId: null },
-        });
-        return null;
+        await stripe.subscriptions.cancel(
+          stripeSubscription.stripeSubscription?.id!
+        );
       }
+      let newSubscriptionId = stripeSubscription?.subscription?.id || null;
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { subscriptionId: newSubscriptionId, stripeSubscriptionId: null },
+      });
+      return null;
     }
   } catch (error: any) {
     throw new HttpInvalidInputError(error.message);

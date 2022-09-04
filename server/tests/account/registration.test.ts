@@ -1,7 +1,6 @@
 import request from "supertest";
 import { app } from "../../src/app";
 import { prisma } from "../../src/database/prisma";
-import { priceIds } from "../../src/functions/billing/createSubscription";
 import clearDatabase from "../setup";
 
 // TODO: create test database
@@ -43,13 +42,12 @@ describe("Test registration", () => {
     async () => {
       const endpoint = "/api/1.0/account/create";
       const stripeToken = "tok_visa";
-      const stripePriceId =
-        priceIds[Math.floor(Math.random() * priceIds.length)];
+      const subscriptionId = "95642f7a-d172-446f-a408-ebf310242a94";
       const data = {
         username: "user1@example.com",
         password,
         stripeToken,
-        stripePriceId,
+        subscriptionId,
       };
       const response = await request(app).post(endpoint).send(data);
       expect(response.statusCode).toBe(200);
@@ -71,17 +69,17 @@ describe("Test registration", () => {
 
   test("Error when confirming choosing a plan with no stripeToken", async () => {
     const endpoint = "/api/1.0/account/create";
-    const stripePriceId = priceIds[Math.floor(Math.random() * priceIds.length)];
+    const subscriptionId = "95642f7a-d172-446f-a408-ebf310242a94";
     const data = {
       username: "user2@example.com",
       password,
-      stripePriceId,
+      subscriptionId,
     };
     const response = await request(app).post(endpoint).send(data);
     expect(response.statusCode).toBe(400);
     expect(response.body.status).toBe("error");
     expect(response.body.message).toBe(
-      "stripeToken_required_if_stripePriceId_set"
+      "stripeToken_required_if_subscriptionId_set"
     );
   });
 
@@ -95,9 +93,7 @@ describe("Test registration", () => {
     const response = await request(app).post(endpoint).send(data);
     expect(response.statusCode).toBe(400);
     expect(response.body.status).toBe("error");
-    expect(response.body.message).toBe(
-      "Account already verified or doesn't exist"
-    );
+    expect(response.body.message).toBe("user_registered_or_verified");
     expect(response.body.details).toMatchInlineSnapshot(`Array []`);
   });
 

@@ -13,14 +13,14 @@ const defaultNumApiCallsAllowedInPeriod = 1000;
 export type Props = {
   username: string;
   password: string;
-  stripePriceId?: string;
+  subscriptionId?: string;
   stripeToken?: string;
 };
 
 export const create = async ({
   username,
   password,
-  stripePriceId,
+  subscriptionId,
   stripeToken,
 }: Props): Promise<User> => {
   // check for matching user befor doing anything, so we can
@@ -37,18 +37,18 @@ export const create = async ({
   const stripeCustomer = await createStripeCustomer({
     email: username,
   });
-  if (stripePriceId && !stripeToken) {
+  if (subscriptionId && !stripeToken) {
     throw new HttpInvalidInputError(
-      "stripeToken_required_if_stripePriceId_set"
+      "stripeToken_required_if_subscriptionId_set"
     );
   }
-  if (stripePriceId) {
+  if (subscriptionId) {
     // TODO: store payment method
-    const stripeSubscription = await createSubscription({
+    const subscriptionData = await createSubscription({
       stripeCustomerId: stripeCustomer.id,
-      stripePriceId,
+      subscriptionId,
     });
-    stripeSubscriptionId = stripeSubscription.id;
+    stripeSubscriptionId = subscriptionData.stripeSubscription?.id || null;
   }
   return await prisma.$transaction(async (prisma) => {
     try {
@@ -60,7 +60,7 @@ export const create = async ({
           isConfirmed: false,
           stripeCustomerId: stripeCustomer.id,
           stripeSubscriptionId,
-          stripePriceId,
+          subscriptionId,
         },
       });
       if (stripeToken) {

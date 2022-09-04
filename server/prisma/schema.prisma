@@ -22,7 +22,8 @@ model User {
   createdAt                    DateTime        @default(now())
   stripeCustomerId             String          @default("invalid")
   stripeSubscriptionId         String?
-  stripePriceId                String?
+  subscription                 Subscription?   @relation(fields: [subscriptionId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  subscriptionId               String?
   accessTokens                 AccessToken[]
   apiKey                       ApiKey[]
   apiStats                     ApiStats?
@@ -73,4 +74,13 @@ model PaymentMethod {
   createdAt             DateTime @default(now())
   user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId                String
+}
+
+model Subscription {
+  id            String   @id @unique @default(uuid())
+  stripePriceId String
+  active        Boolean  @default(true)
+  liveMode      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  User          User[]
 }

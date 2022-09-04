@@ -21,7 +21,7 @@ router.get(
       return next(new HttpUnauthorizedError("Unauthorized"));
     }
     return response.json(
-      successResponse({ data: { id: request.adminUser.stripePriceId } })
+      successResponse({ data: { id: request.adminUser.subscriptionId } })
     );
   }
 );
@@ -43,11 +43,11 @@ router.post(
     } catch (errors) {
       return next(new HttpInvalidInputError(errors));
     }
-    const stripePriceId = updateSubscriptionPlanRequest.id;
+    const subscriptionId = updateSubscriptionPlanRequest.id;
     try {
       await switchSubscriptionPlan({
         user: request.adminUser,
-        stripePriceId,
+        subscriptionId,
       });
       const updatedUser = await prisma.user.findUnique({
         where: { id: request.adminUser.id },
@@ -56,7 +56,7 @@ router.post(
       return response.json(
         successResponse({
           message: "subscription_changed",
-          data: { id: updatedUser?.stripePriceId },
+          data: { id: updatedUser?.subscriptionId },
         })
       );
     } catch (error: unknown) {

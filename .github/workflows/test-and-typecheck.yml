@@ -1,0 +1,47 @@
+name: Test, Lint and Typecheck
+
+on: [push]
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Enter server workspace
+        run: cd server
+      - name: Install dependencies
+        run: npm install --frozen-lockfile
+      - name: Typecheck
+        run: npm run ts:check
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Enter server workspace
+        run: cd server
+      - name: Install dependencies
+        run: npm install --frozen-lockfile
+      - name: Typecheck
+        run: npm run lint
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .env
+        run: cp server/.env.example server/.env
+      - name: Enter server workspace
+        run: cd server
+      - name: Install dependencies
+        run: npm install --frozen-lockfile
+      - name: Test
+        run: npm run test
+  prettier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Enter server workspace
+        run: cd server
+      - name: Install dependencies
+        run: npm install --frozen-lockfile
+      - name: Test
+        run: npm run prettier:check

@@ -1,4 +1,6 @@
+import { Subscription } from "@prisma/client";
 import Stripe from "stripe";
+import { prisma } from "../../database/prisma";
 import { HttpInvalidInputError } from "../../errors";
 import { stripe } from "../utils/stripe";
 
@@ -10,28 +12,39 @@ export const priceIds = [
 
 export type Props = {
   stripeCustomerId: string;
-  stripePriceId: string;
+  subscriptionId: string;
+};
+export type Result = {
+  subscription?: Subscription;
+  stripeSubscription?: Stripe.Subscription;
 };
 export const createSubscription = async ({
   stripeCustomerId,
-  stripePriceId,
-}: Props): Promise<Stripe.Subscription> => {
-  if (!priceIds.includes(stripePriceId)) {
-    throw new HttpInvalidInputError("Invalid stripePriceId");
+  subscriptionId,
+}: Props): Promise<Result> => {
+  // TODO: match against stripe live/test mode
+  const subscription = await prisma.subscription.findFirst({
+    where: { id: subscriptionId, active: true },
+  });
+  if (!subscription) {
+    throw new HttpInvalidInputError("invalid_subscriptionId");
   }
   try {
     const stripeSubscription = await stripe.subscriptions.create({
       customer: stripeCustomerId,
       items: [
         {
-          price: stripePriceId,
+          price: subscription.stripePriceId,
         },
       ],
       payment_behavior: "default_incomplete",
       payment_settings: { save_default_payment_method: "on_subscription" },
       expand: ["latest_invoice.payment_intent"],
     });
-    return stripeSubscription;
+    return {
+      subscription,
+      stripeSubscription,
+    };
   } catch (error: any) {
     throw new HttpInvalidInputError(error.message);
   }

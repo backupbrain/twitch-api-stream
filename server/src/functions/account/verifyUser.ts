@@ -22,13 +22,9 @@ export const verifyUser = async ({
       },
     });
     if (updatedUsers.count !== 1) {
-      throw new HttpInvalidInputError(
-        "Account already verified or doesn't exist"
-      );
+      throw new HttpInvalidInputError("user_registered_or_verified");
     }
   } catch (error) {
-    throw new HttpInvalidInputError(
-      "Account already verified or doesn't exist"
-    );
+    throw new HttpInvalidInputError("user_registered_or_verified");
   }
 };
