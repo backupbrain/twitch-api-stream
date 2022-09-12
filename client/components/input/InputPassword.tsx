@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import Button from "react-bootstrap/Button";
+import Form from "react-bootstrap/Form";
+import InputGroup from "react-bootstrap/InputGroup";
 
 export type Props = {
   label?: string;
@@ -24,24 +27,35 @@ export default function InputPassword(props: Props) {
 
   // make props.type = "text" by default
   return (
-    <div>
+    <Form.Group className="mb-3">
       {props.label && (
-        <label htmlFor={`${props.name}Input`}>{props.label}</label>
+        <Form.Label htmlFor={`${props.name}Input`}>{props.label}</Form.Label>
       )}
-      <input
-        id={`${props.name}Input`}
-        name={props.name}
-        type={isObscured ? "password" : "text"}
-        placeholder={props.placeholder}
-        value={localValue}
-        onChange={(event) => setLocalValue(event.target.value)}
-        className="py-10 px-5"
-      />
-      {isObscured ? (
-        <a onClick={() => setIsObscured(false)}>Show</a>
-      ) : (
-        <a onClick={() => setIsObscured(true)}>Hide</a>
-      )}
-    </div>
+      <InputGroup>
+        <Form.Control
+          id={`${props.name}Input`}
+          name={props.name}
+          type={isObscured ? "password" : "text"}
+          placeholder={props.placeholder}
+          value={localValue}
+          onChange={(event) => setLocalValue(event.target.value)}
+        />
+        {isObscured ? (
+          <Button
+            onClick={() => setIsObscured(false)}
+            variant="outline-secondary"
+          >
+            Show
+          </Button>
+        ) : (
+          <Button
+            onClick={() => setIsObscured(true)}
+            variant="outline-secondary"
+          >
+            Hide
+          </Button>
+        )}
+      </InputGroup>
+    </Form.Group>
   );
 }

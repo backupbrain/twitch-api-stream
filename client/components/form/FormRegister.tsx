@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MouseEvent, useRef, useState } from "react";
+import Button from "react-bootstrap/Button";
 import InputCheckbox from "../input/InputCheckbox";
 import InputPassword from "../input/InputPassword";
 import InputText from "../input/InputText";
@@ -125,14 +126,15 @@ export default function FormRegister(props: Props) {
             onCheckChanged={onAgreeCheckChanged}
           />
         </div>
-        <button
+        <Button
+          variant="primary"
           onClick={(event) => {
             register(event);
           }}
           disabled={!isFormValid}
         >
           Create account
-        </button>
+        </Button>
       </form>
       <div>
         <Link href="/account/login">

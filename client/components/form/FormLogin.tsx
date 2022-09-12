@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { MouseEvent, useRef, useState } from "react";
-import InputText from "../input/InputText";
+import Button from "react-bootstrap/Button";
+import Form from "react-bootstrap/Form";
 import {
   AuthState,
   AuthToken,
   useStore as useAuthStore,
 } from "../../store/authorization/authorization";
 import InputPassword from "../input/InputPassword";
+import InputText from "../input/InputText";
 
 export type Props = {
   username?: string;
@@ -88,7 +90,7 @@ export default function FormLogin(props: Props) {
   };
   return (
     <div>
-      <form>
+      <Form>
         <InputText
           label="Email"
           name="email"
@@ -106,15 +108,16 @@ export default function FormLogin(props: Props) {
           onChangeText={onPasswordChange}
         />
 
-        <button
-          onClick={(event) => {
+        <Button
+          variant="primary"
+          onClick={(event: any) => {
             login(event);
           }}
           disabled={!isFormValid}
         >
           Log in
-        </button>
-      </form>
+        </Button>
+      </Form>
       <div>
         <Link href="/account/create">
           <a>Create account</a>

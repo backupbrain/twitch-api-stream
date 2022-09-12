@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import Form from "react-bootstrap/Form";
 
 export type Props = {
   name: string;
@@ -17,14 +18,12 @@ export default function InputCheckbox(props: Props) {
   };
 
   return (
-    <label htmlFor={`${props.name}Checkbox`}>
-      <input
-        id={`${props.name}Checkbox`}
-        type="checkbox"
-        onChange={onChange}
-        checked={isChecked}
-      />
-      {props.label}
-    </label>
+    <Form.Check
+      checked={isChecked}
+      type={"checkbox"}
+      id={`${props.name}Checkbox`}
+      label={props.label}
+      onChange={onChange}
+    />
   );
 }
