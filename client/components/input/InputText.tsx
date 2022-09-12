@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Form from "react-bootstrap/Form";
 
 export type Props = {
   label?: string;
@@ -24,19 +25,18 @@ export default function InputText(props: Props) {
 
   // make props.type = "text" by default
   return (
-    <div>
+    <Form.Group className="mb-3">
       {props.label && (
-        <label htmlFor={`${props.name}Input`}>{props.label}</label>
+        <Form.Label htmlFor={`${props.name}Input`}>{props.label}</Form.Label>
       )}
-      <input
+      <Form.Control
         id={`${props.name}Input`}
         name={props.name}
         type={props.type}
         placeholder={props.placeholder}
         value={localValue}
         onChange={(event) => setLocalValue(event.target.value)}
-        className="py-10 px-5"
       />
-    </div>
+    </Form.Group>
   );
 }

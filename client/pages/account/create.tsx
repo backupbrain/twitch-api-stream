@@ -1,9 +1,10 @@
-import styles from "../../styles/Home.module.css";
 import Link from "next/link";
-import NavbarPublic from "../../components/navbar/NavbarPublic";
-import FormRegister from "../../components/form/FormRegister";
 import { useRouter } from "next/router";
-import React, { useRef } from "react";
+import { useRef } from "react";
+import Container from "react-bootstrap/Container";
+import FormRegister from "../../components/form/FormRegister";
+import NavbarPublic from "../../components/navbar/NavbarPublic";
+import styles from "../../styles/Home.module.css";
 
 export default function Register() {
   const username = useRef("");
@@ -23,17 +24,18 @@ export default function Register() {
   return (
     <div className={styles.container}>
       <NavbarPublic />
-
-      <h1>Create Account</h1>
-      <p className={styles.description}>
-        <Link href="/">
-          <a>Back to home</a>
-        </Link>
-      </p>
-      <FormRegister
-        onUsernameChange={onUsernameChange}
-        onRegisterSuccess={navigateToVerifyPage}
-      />
+      <Container>
+        <h1>Create Account</h1>
+        <p className={styles.description}>
+          <Link href="/">
+            <a>Back to home</a>
+          </Link>
+        </p>
+        <FormRegister
+          onUsernameChange={onUsernameChange}
+          onRegisterSuccess={navigateToVerifyPage}
+        />
+      </Container>
     </div>
   );
 }

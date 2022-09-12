@@ -1,35 +1,22 @@
-import Link from "next/link";
-import React from "react";
+import Nav from "react-bootstrap/Nav";
+import Navbar from "react-bootstrap/Navbar";
 
 export type Props = {
   user?: any; // TODO: make this a "user" object
 };
 export default function NavbarPublic(props: Props) {
   return (
-    <div>
-      <div>
-        <Link href="/">
-          <a>Company</a>
-        </Link>
-      </div>
-      <div>
-        <ul>
+    <Navbar>
+      <Navbar.Brand href="/">Company</Navbar.Brand>
+      <Navbar.Toggle aria-controls="navbar-nav" />
+      <Navbar.Collapse id="navbar-nav">
+        <Nav className="me-auto">
+          {!props.user && <Nav.Link href="/account/login">Login</Nav.Link>}
           {!props.user && (
-            <li>
-              <Link href="/account/login">
-                <a>Login</a>
-              </Link>
-            </li>
+            <Nav.Link href="/account/create">Create account</Nav.Link>
           )}
-          {!props.user && (
-            <li>
-              <Link href="/account/create">
-                <a>Create account</a>
-              </Link>
-            </li>
-          )}
-        </ul>
-      </div>
-    </div>
+        </Nav>
+      </Navbar.Collapse>
+    </Navbar>
   );
 }
